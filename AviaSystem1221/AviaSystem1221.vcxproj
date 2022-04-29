@@ -19,10 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="bin\Hash.cpp" />
     <ClCompile Include="bin\main.cpp" />
+    <ClCompile Include="bin\FileHandle.cpp" />
     <ClCompile Include="bin\UserClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bin\Hash.h" />
+    <ClInclude Include="bin\FileHandle.h" />
     <ClInclude Include="bin\UserClass.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
