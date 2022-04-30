@@ -2,6 +2,13 @@
 
 #include <fstream>
 
+enum FileStatus
+{
+	Opened = 0,
+	Empty = 1,
+	NotOpened = 2
+};
+
 namespace FileHandle
 {
 	std::string ReadString(std::fstream& file);
@@ -21,6 +28,7 @@ namespace FileHandle
 		file.write((char*)&var, sizeof(var));
 	}
 
-	bool file_is_empty(std::fstream& file);
-		
 }
+
+
+int getFileStatus(std::fstream& file);

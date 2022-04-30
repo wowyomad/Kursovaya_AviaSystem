@@ -7,23 +7,24 @@
 #include <iostream>
 #include <cstdio>
 
-#define PATH_USERBASE	"Files\\UserBase.bin"
-#define VECTOR_BUFF		1024
-#define MIN_PASSWORD	8
-#define MIN_LOGIN		3
-#define MAX_LOGIN		32
-#define MAX_PASSWORD	32
-#define STRING_BUFF		32
-#define ENTER			13
+static const std::string PATH_USERBASE = "Files\\UserBase.dat";
+static const int VECTOR_BUFF = 1024;
+static const int MIN_PASSWORD = 8;
+static const int MIN_LOGIN = 3;
+static const int MAX_LOGIN = 32;
+static const int MAX_PASSWORD = 32;
+static const int STRING_RESERVE = 64;
+static const int ENTER_KEY = 13;
 
 std::fstream User::userBase;
 std::vector<User> User::userArray;
 
 User::User()
 {
-	login.reserve(STRING_BUFF);
-	access = -1;
-
+	//hash и salt занимают по 8 байт, поэтмоу
+	//резервировать место вручную не надо.
+	login.reserve(MAX_LOGIN);
+	access = 0;
 }
 
 User::User(const User& user)
@@ -47,32 +48,82 @@ User::~User()
 
 }
 
-bool User::loginExist(std::string& newLogin)
+User User::operator=(const User& source)
 {
-	for (auto& it : userArray)
+	this->login = source.login;
+	this->hash = source.hash;
+	this->salt = source.salt;
+	this->access = source.access;
+	return *this;
+}
+
+User User::UserIn(const int& access)
+{
+	loginIn(login);
+	std::string password;
+	passwordIn(password);
+	salt = RNG::salt();
+	hash = RNG::hash(password, salt);
+	this->access = access;
+	return *this;
+}
+
+int User::Login()
+{
+	std::string password;
+	std::string login;
+	password.reserve(MAX_PASSWORD);
+	login.reserve(MAX_LOGIN);
+	loginIn(login);
+	passwordIn(password);
+	int i = loginExist(login);
+	if (i > -1)
 	{
-		if (it.login == newLogin)
-			return true;
+		if (RNG::hash(password, userArray[i].salt) == userArray[i].hash)
+		{
+			if (userArray[i].access != AccessLevel::NoAcess)
+			{
+				*this = userArray[i];
+				return userArray[i].access;
+			}
+			else
+			{
+				return userArray[i].access;
+			}
+		}
 	}
-	return false;
+	return -1;
+}
+
+int User::loginExist(std::string& newLogin)
+{
+	for (int i = 0; i < userArray.size(); i++)
+	{
+		if (userArray[i].login == newLogin)
+				return i;
+	}
+	return -1;
 }
 
 User User::ReadUser()
 {
-	User temp;
-	temp.login = FileHandle::ReadString(userBase);
-	temp.hash = FileHandle::ReadString(userBase);
-	temp.salt = FileHandle::ReadString(userBase);
-	temp.access = FileHandle::ReadVar<int>(userBase);
-	return temp;
+	User user;
+	std::string line;
+	std::getline(userBase, user.login);
+	std::getline(userBase, user.hash);
+	std::getline(userBase, user.salt);
+	std::getline(userBase, line);
+	user.access = std::stoi(line);
+	return user;
 }
 
 void User::WriteUser()
 {
-	FileHandle::WriteString(userBase, login);
-	FileHandle::WriteString(userBase, salt);
-	FileHandle::WriteString(userBase, hash);
-	FileHandle::WriteVar(userBase, access);
+	userBase << '\n';
+	userBase << login << '\n';
+	userBase << hash << '\n';
+	userBase << salt << '\n';
+	userBase << access << '\n';
 }
 
 void User::CreateUserBase()
@@ -92,75 +143,67 @@ void User::SaveUserArray()
 	}
 }
 
-void User::NewUser()
+bool User::NewUser(const int& access)
 {
 	User temp;
-	//Логин
-	while (true)
-	{
-		std::cout << "Логин может содержать символы английского алфавита, цифры и нижнее подчеркивание.\n"
-			<< "Логин: ";
-		if (loginIn(temp.login))
-		{
-			if (loginExist(temp.login))
-			{
-				std::cout << "Логин уже существует.\n\n";
-			}
-			else break;
-		}
-		else
-		{
-			std::cout << "\nНекорректный ввод!\n\n";
-		}
-	}
-	//Пароль
-	while (true)
-	{
-		std::string password;
-		password.reserve(32);
-		std::cout << "Пароль может содеражть любые символы, за исключением кириллицы.\n"
-			<< "Пароль: ";
-		if (passwordIn(password))
-		{
-			temp.salt = RNG::salt();
-			temp.hash = RNG::hash(password, temp.salt);
-			break;
-		}
-		else
-		{
-			std::cout << "\nНекорректный ввод!\n\n";
-		}
-	}
-	temp.access = AccessLevel::NoAcess;
+	temp.UserIn(access);
+	if (loginExist(temp.login) > -1) 
+		return false;
 	userArray.emplace_back(std::move(temp));
-}
-
-bool User::InitUserBase()
-{
-	userArray.reserve(VECTOR_BUFF);
-	userBase.open(PATH_USERBASE, std::ios::in | std::ios::out | std::ios::binary);
-	if (!userBase.is_open()) return false;
-	else if (FileHandle::file_is_empty(userBase)) return true;
-	do
-	{
-		userArray.emplace_back(std::move(User::ReadUser()));
-	} while (!userBase.eof());
 	return true;
 }
 
-bool passwordIn(std::string& password)
+int User::InitUserBase()
 {
+	userArray.reserve(VECTOR_BUFF);
+	userBase.open(PATH_USERBASE, std::ios::in | std::ios::out | std::ios::binary);
+	switch (getFileStatus(userBase))
+	{
+	case FileStatus::NotOpened:
+		return FileStatus::NotOpened;
+	case FileStatus::Empty:
+		return FileStatus::Empty;
+	case FileStatus::Opened:
+		break;
+	default:
+		return -1;
+	}
+	std::string t;
+	while (std::getline(userBase, t))
+	{
+		userArray.emplace_back(std::move(User::ReadUser()));
+	}
+	return FileStatus::Opened;
+}
+
+void passwordIn(std::string& password)
+{
+	std::cout << "Пароль может содеражть любые символы, за исключением кириллицы.\n"
+		<< "Пароль: ";
 	password.clear();
 	unsigned char ch = 0;
 	do
 	{
 		ch = _getch();
-		if (ch == ENTER)
+		if (ch == ENTER_KEY)
 		{
-			printf("\n\n");
-			if (password.length() < MIN_PASSWORD) return false;
-			else if (password.length() > MAX_PASSWORD) return false;
-			else return true;
+			if (password.length() < MIN_PASSWORD)
+			{
+				std::cout << "\nОшибка. Пароля слишком короткий\n\n"
+					<< "Пароль: ";
+				password.clear();
+			}
+			else if (password.length() > MAX_PASSWORD)
+			{
+				std::cout << "Ошибка. Пароль слишком длинный\n\n"
+					<< "Пароль: ";
+				password.clear();
+			}
+			else
+			{
+				printf("\n\n");
+				break;
+			}
 		}
 		else if (ch == '\b')
 		{
@@ -172,7 +215,8 @@ bool passwordIn(std::string& password)
 		}
 		else if (is_russian(ch))
 		{
-			return false;
+			std::cout << "\nОшибка. Введен русский символ!\n\n"
+				<< "Пароль: ";
 		}
 		else
 		{
@@ -182,19 +226,34 @@ bool passwordIn(std::string& password)
 	} while (true);
 }
 
-bool loginIn(std::string& login)
+void loginIn(std::string& login)
 {
+	std::cout << "Логин может содержать символы английского алфавита, цифры и нижнее подчеркивание.\n"
+		<< "Логин: ";
 	login.clear();
 	unsigned char ch = 0;
 	do
 	{
 		ch = _getch();
-		if (ch == ENTER)
+		if (ch == ENTER_KEY)
 		{
-			printf("\n\n");
-			if (login.length() < MIN_LOGIN) return false;
-			else if (login.length() > MAX_LOGIN) return false;
-			else return true;
+			if (login.length() < MIN_LOGIN)
+			{
+				std::cout << "\nОшибка. Логин слишком короткий\n\n"
+					<< "Логин: ";
+				login.clear();
+			}
+			else if (login.length() > MAX_LOGIN)
+			{
+				std::cout << "Ошибка. Логин слишком короткий\n\n"
+					<< "Логин: ";
+				login.clear();
+			}
+			else
+			{
+				printf("\n\n");
+				break;
+			}
 		}
 		else if (ch == '\b')
 		{
@@ -213,7 +272,12 @@ bool loginIn(std::string& login)
 			printf("%c", ch);
 			login.push_back(ch);
 		}
-		else return false;
+		else
+		{
+			std::cout << "\nНедопустимый символ\n\n"
+				<< "Логин: ";
+			login.clear();
+		}
 	} while (true);
 }
 
