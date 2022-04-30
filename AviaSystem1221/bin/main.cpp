@@ -1,14 +1,20 @@
-#include <cstdio>
-#include <string>
+#include "Hash.h"
+#include "UserClass.h"
+#include <Windows.h>
+#include <conio.h>
 #include <iostream>
-#include <ctime>
 #include <fstream>
 
-#include "UserClass.h"
-#include "Hash.h"
-
+	
 int main(int argc, char** argv)
 {
-	std::fstream file;
-	file.open("test");
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
+	if (!User::InitUserBase())
+	{
+		User::CreateUserBase();
+	}
+	User::NewUser();
+	User::SaveUserArray();
+	return 0;
 }

@@ -1,6 +1,7 @@
 #include "FileHandle.h"
 
 #define STRING_BUFF
+
 //Чтение из файла строки до нуль-терминатора
 std::string FileHandle::ReadString(std::fstream& file)
 {
@@ -10,17 +11,17 @@ std::string FileHandle::ReadString(std::fstream& file)
 	do
 	{
 		file.read((char*)&ch, sizeof(char));
-		if (ch == '\0') break;
-		output.push_back(ch);
+		if (ch != '\0') output.push_back(ch);
+		else break;
 
 	} while (!file.eof());
 	return output;
 }
 
 //Запись в файл строки, в том числе нуль-терминатор
-void FileHandle::WriteString(std::fstream& file,const std::string& input)
+void FileHandle::WriteString(std::fstream& file, const std::string& input)
 {
-	//length + 1 запишет всю строку в файл, включая нуль.
+	//length + 1 = строка + нуль
 	file.write(input.c_str(), input.length() + 1);
 }
 
@@ -28,7 +29,7 @@ bool FileHandle::file_is_empty(std::fstream& file)
 {
 	std::streampos current = file.tellg();
 	file.seekp(0, std::ios::end);
-	//Если tellp() вернет 0, значит указатель в начале и файл пустой,
+	//Если tellp() вернет 0, значит указатель находится в начале и файл пустой,
 	//иначе, файл не пустой
 	bool is_empty = file.tellp() > 0 ? false : true;
 	file.seekp(current);

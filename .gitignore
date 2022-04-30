@@ -361,3 +361,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /AviaSystem1221/test
+/AviaSystem1221/Files/UserBase.bin.bak
+/AviaSystem1221/Files/UserBase.bin
