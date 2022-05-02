@@ -10,7 +10,6 @@ void loginIn(std::string& login);
 bool is_russian(unsigned char& ch);
 bool is_english(unsigned char& ch);
 
-
 class User
 {
 private:
@@ -53,6 +52,6 @@ public:
 	static void CreateUserBase();
 	//—охранение массива в пользовательскую базу
 	static void SaveUserArray();
-
+	static bool checkForAdmin();
 };
 

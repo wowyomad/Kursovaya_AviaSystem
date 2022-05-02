@@ -3,11 +3,6 @@
 #include <cmath>
 #include "Hash.h"
 
-#define ASCII_a 97
-#define ASCII_z 122
-#define ENG_LETTERS 26
-
-
 std::string RNG::salt(const int size)
 {
 	std::string salt;
@@ -44,9 +39,9 @@ std::string RNG::hash(std::string password, std::string key, const int hash_leng
 	{
 		for (int j = 0; j < key.length(); j++)
 		{
-			unhashed[i] += ENG_LETTERS % (i * (j + 1) + j + 1);
-			while (unhashed[i] > ASCII_z) unhashed[i] -= ENG_LETTERS;
-			while (unhashed[i] < ASCII_a) unhashed[i] += ENG_LETTERS;
+			unhashed[i] += ('z' - 'a') % (i * (j + 1) + j + 1);
+			while (unhashed[i] > 'z') unhashed[i] -= ('z' - 'a');
+			while (unhashed[i] < 'a') unhashed[i] += ('z' - 'a');
 			key_value3 += key_value1 % unhashed[i] + key_value2 % unhashed[i];
 			if (i == unhashed.length()) break;
 		}
@@ -59,8 +54,7 @@ std::string RNG::hash(std::string password, std::string key, const int hash_leng
 			for (int j = 0; j < unhashed.length(); j++)
 			{
 				int m = i + j;
-				hashed[i] += m
-					+ (key_value3 * (m - 1) % (m + 1))
+				hashed[i] += m + (key_value3 * (m - 1) % (m + 1)) + (key_value3 * (m - 1) % (m + 1))
 						+ hashed[i] % unhashed.length() + unhashed[j] % ('z' - 'a');
 			}
 			while (hashed[i] > 'z') (hashed[i]) -= 'z' - 'a';

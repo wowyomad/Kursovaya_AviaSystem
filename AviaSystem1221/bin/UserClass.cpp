@@ -7,7 +7,7 @@
 #include <iostream>
 #include <cstdio>
 
-static const std::string PATH_USERBASE = "Files\\UserBase.dat";
+extern const std::string PATH_USERBASE = "Files\\UserBase.dat";
 static const int VECTOR_BUFF = 1024;
 static const int MIN_PASSWORD = 8;
 static const int MIN_LOGIN = 3;
@@ -21,8 +21,6 @@ std::vector<User> User::userArray;
 
 User::User()
 {
-	//hash и salt занимают по 8 байт, поэтмоу
-	//резервировать место вручную не надо.
 	login.reserve(MAX_LOGIN);
 	access = 0;
 }
@@ -108,22 +106,19 @@ int User::loginExist(std::string& newLogin)
 User User::ReadUser()
 {
 	User user;
-	std::string line;
-	std::getline(userBase, user.login);
-	std::getline(userBase, user.hash);
-	std::getline(userBase, user.salt);
-	std::getline(userBase, line);
-	user.access = std::stoi(line);
+	userBase >> user.login;
+	userBase >> user.hash;
+	userBase >> user.salt;
+	userBase >> user.access;
 	return user;
 }
 
 void User::WriteUser()
 {
-	userBase << '\n';
 	userBase << login << '\n';
 	userBase << hash << '\n';
 	userBase << salt << '\n';
-	userBase << access << '\n';
+	userBase << access;
 }
 
 void User::CreateUserBase()
@@ -169,11 +164,23 @@ int User::InitUserBase()
 		return -1;
 	}
 	std::string t;
-	while (std::getline(userBase, t))
+	while (!userBase.eof())
 	{
 		userArray.emplace_back(std::move(User::ReadUser()));
+		wchar_t temp;
+		userBase.read((char*)&temp, sizeof(wchar_t));
 	}
 	return FileStatus::Opened;
+}
+
+bool User::checkForAdmin()
+{
+	for (auto& it : userArray)
+	{
+		if (it.access == AccessLevel::Admin)
+			return true;
+	}
+	return false;
 }
 
 void passwordIn(std::string& password)
@@ -195,7 +202,7 @@ void passwordIn(std::string& password)
 			}
 			else if (password.length() > MAX_PASSWORD)
 			{
-				std::cout << "Ошибка. Пароль слишком длинный\n\n"
+				std::cout << "\nОшибка. Пароль слишком длинный\n\n"
 					<< "Пароль: ";
 				password.clear();
 			}
@@ -245,7 +252,7 @@ void loginIn(std::string& login)
 			}
 			else if (login.length() > MAX_LOGIN)
 			{
-				std::cout << "Ошибка. Логин слишком короткий\n\n"
+				std::cout << "\nОшибка. Логин слишком длинный\n\n"
 					<< "Логин: ";
 				login.clear();
 			}

@@ -22,12 +22,16 @@
     <ClCompile Include="bin\Hash.cpp" />
     <ClCompile Include="bin\main.cpp" />
     <ClCompile Include="bin\FileHandle.cpp" />
+    <ClCompile Include="bin\Table.cpp" />
     <ClCompile Include="bin\UserClass.cpp" />
+    <ClCompile Include="bin\UserInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bin\Hash.h" />
     <ClInclude Include="bin\FileHandle.h" />
+    <ClInclude Include="bin\Table.h" />
     <ClInclude Include="bin\UserClass.h" />
+    <ClInclude Include="bin\UserInterface.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
