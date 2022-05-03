@@ -3,30 +3,19 @@
 #include <vector>
 
 #include "Hash.h"
-#include "FileHandle.h"
-
-void passwordIn(std::string& password);
-void loginIn(std::string& login);
-bool is_russian(unsigned char& ch);
-bool is_english(unsigned char& ch);
+#include "FlightClass.h"
 
 class User
 {
 private:
+	static std::ofstream UserFileOut;
+	static std::ifstream UserFileIn;
+	static std::fstream UserFile;
+	static std::vector<User> userVector;
 	std::string login;
 	std::string hash;
 	std::string salt;
 	int access;
-
-	static std::fstream userBase;
-	static std::vector<User> userArray;
-
-	static int loginExist(std::string& login);
-	//Чтение данных из файла в объект
-	static User ReadUser();
-	//Запись данных из объекта в файл
-	void WriteUser();
-
 public:
 	enum AccessLevel
 	{
@@ -40,18 +29,47 @@ public:
 	User(User&& user) noexcept;
 	~User();
 
-	User operator =(const User& source);
-
-	User UserIn(const int& access = User::AccessLevel::NoAcess);
+	friend std::fstream operator << (std::fstream& fs, User& user);
+	friend std::fstream operator >> (std::fstream& fs, User& user);
+	User operator = (const User& source);
+	User operator = (User&& source) noexcept;
+	User InputUser(const int access);
 	int Login();
-	//Вввод пользователем логина и пароля и сохранение в массив
-	static bool NewUser(const int& access = 0);
-	static int InitUserBase();
-	static void ReadUserBase();
-	//Создание файла пользовательской базы
-	static void CreateUserBase();
-	//Сохранение массива в пользовательскую базу
-	static void SaveUserArray();
+	static bool NewUser(const int access = AccessLevel::NoAcess);
 	static bool checkForAdmin();
+	static int loginExist(std::string& login);
 };
 
+class BaseClass
+{
+protected:
+	std::string login;
+public:
+	virtual void Show() = 0;
+	virtual void Search() = 0;
+	virtual void Sort() = 0;
+};
+
+class Admin : public BaseClass
+{
+public:
+	Admin() : BaseClass() {};
+	void Sort() override;
+	void Search() override;
+	void Show() override;
+	void Edit();
+};
+
+class Client : public BaseClass
+{
+private:
+
+public:
+	Client() : BaseClass() {};
+	void Show() override;
+	void Search() override;
+	void Sort() override;
+	bool BuyTicket();
+
+
+};
