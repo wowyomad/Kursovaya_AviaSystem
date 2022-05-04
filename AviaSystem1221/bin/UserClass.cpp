@@ -8,7 +8,6 @@
 #include <cstdio>
 
 extern const char PATH_USERBASE[] = "Files\\UserBase.dat";
-static const int VECTOR_BUFF = 1024;
 extern const int MIN_PASSWORD = 8;
 extern const int MAX_PASSWORD = 32;
 extern const int MIN_LOGIN = 3;

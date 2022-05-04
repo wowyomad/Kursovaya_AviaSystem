@@ -12,26 +12,80 @@ static const int MAX_SPACE = 1000;
 
 static const int FIELDS = 10;
 
-const char ticket_col1[] = "Номер билета";
-const char ticket_col2[] = "Место вылета";
-const char ticket_col3[] = "Место прибытия";
-const char ticket_col4[] = "Дата вылета";
-const char ticket_col5[] = "Время вылета";
-const char ticket_col6[] = "Время прибытия";
+static const char PATH_BASE_FLIGHTS[] = "FlightsBase.dat";
 
-const char flight_col1[] = "Номер рейса";
-const char* flight_col2 = ticket_col2;
-const char* flight_col3 = ticket_col3;
-const char* flight_col4 = ticket_col4;
-const char* flight_col5 = ticket_col5;
-const char* flight_col6 = ticket_col6;
+static const char ticket_col1[] = "Номер билета";
+static const char ticket_col2[] = "Место вылета";
+static const char ticket_col3[] = "Место прибытия";
+static const char ticket_col4[] = "Дата вылета";
+static const char ticket_col5[] = "Время вылета";
+static const char ticket_col6[] = "Время прибытия";
+
+static const char flight_col1[] = "Номер рейса";
+static const char* flight_col2 = ticket_col2;
+static const char* flight_col3 = ticket_col3;
+static const char* flight_col4 = ticket_col4;
+static const char* flight_col5 = ticket_col5;
+static const char* flight_col6 = ticket_col6;
 
 const int CELL_WIDTH = 20;
 
-std::vector<Flight> Flight::fligthsVector;
-std::ifstream Flight::FlightsFileIn;
-std::ofstream Flight::FlightsFileOut;
-std::fstream Flight::FlightsFile;
+std::vector<Flight> Flight::flightVector;
+std::fstream Flight::Base_Flights;
+
+void Flight::ReadFileToVector()
+{
+
+	if (flightVector.capacity() < VECTOR_BUFF)
+		flightVector.reserve(VECTOR_BUFF);
+	Base_Flights.open(PATH_BASE_FLIGHTS, std::ios::in);
+	if (Base_Flights.is_open())
+	{
+		while(!Base_Flights.eof())
+		{
+			
+		}
+	}
+}
+
+void Flight::WriteVectorToFile()
+{
+	Base_Flights.open(PATH_BASE_FLIGHTS, std::ios::out);
+	size_t limiter = flightVector.size() - 1;
+	for (size_t i = 0; i < limiter; i++)
+	{
+		Base_Flights << flightVector[i] << '\n';
+	}
+	Base_Flights << flightVector[limiter];
+}
+
+int Flight::getFileInfo(size_t& fileSize)
+{
+	fileSize = 0;
+	std::streampos initialPos = 0;
+	bool alreadyOpened = false;
+	if (Base_Flights.is_open())
+		alreadyOpened = true;
+	else
+		Base_Flights.open(PATH_BASE_FLIGHTS, std::ios::in);
+
+	if (Base_Flights.is_open())
+	{
+		initialPos = Base_Flights.tellg();
+		Base_Flights.seekg(0, std::ios::end);
+		Base_Flights.seekg(initialPos);
+		fileSize = Base_Flights.tellg();
+		if (!alreadyOpened)
+			Base_Flights.close();
+		if (fileSize > 0)
+			return FileStatus::Opened;
+		else return FileStatus::Empty;
+
+	}
+	else return FileStatus::NotOpened;
+
+
+}
 
 void Flight::setId(const std::string& id)
 {
@@ -116,7 +170,7 @@ void Flight::InputInfo()
 		InputVar(countBsn, 0, space - countEcn, "Количество билетов бизнесс-класса: ");
 	else
 		std::cout << "Места для посажиров бизнес-класса не осталось\n";
-	
+
 	id = std::to_string(std::time(NULL));
 }
 
@@ -135,7 +189,7 @@ void Flight::PrintFlightInfo_withTop()
 void Flight::PrintFlightInfo_vector()
 {
 	PrintTopRaw();
-	for (auto& it : fligthsVector)
+	for (auto& it : flightVector)
 	{
 		it.PrintFlightInfo();
 	}
@@ -149,24 +203,24 @@ void Flight::PrintTopRaw()
 
 std::fstream& operator<<(std::fstream& fs, Flight& flight)
 {
-	fs << flight.id << '\n';
-	fs << flight.locDeparture << '\n';
-	fs << flight.locArrival << '\n';
+	fs << flight.id << ' ';
+	fs << flight.locDeparture << '#';
+	fs << flight.locArrival << '#';
 
-	fs << flight.timeDeparture.tm_year << '\n';
-	fs << flight.timeDeparture.tm_mon << '\n';
-	fs << flight.timeDeparture.tm_year << '\n';
+	fs << flight.timeDeparture.tm_year << ' ';
+	fs << flight.timeDeparture.tm_mon << ' ';
+	fs << flight.timeDeparture.tm_year << ' ';
 
-	fs << flight.timeDeparture.tm_hour << '\n';
-	fs << flight.timeDeparture.tm_min << '\n';
+	fs << flight.timeDeparture.tm_hour << ' ';
+	fs << flight.timeDeparture.tm_min << ' ';
 
-	fs << flight.timeArrival.tm_hour << '\n';
-	fs << flight.timeArrival.tm_min << '\n';
+	fs << flight.timeArrival.tm_hour << ' ';
+	fs << flight.timeArrival.tm_min << ' ';
 
-	fs << flight.priceBsn << '\n';
-	fs << flight.priceEcn << '\n';
-	fs << flight.countBsn << '\n';
-	fs << flight.countEcn << '\n';
+	fs << flight.priceBsn << ' ';
+	fs << flight.priceEcn << ' ';
+	fs << flight.countBsn << ' ';
+	fs << flight.countEcn;
 	return fs;
 }
 

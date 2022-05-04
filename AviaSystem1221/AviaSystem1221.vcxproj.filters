@@ -56,7 +56,7 @@
     <ClInclude Include="bin\UserConsoleInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bin\FileClass.h">
+    <ClInclude Include="bin\FileClass.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

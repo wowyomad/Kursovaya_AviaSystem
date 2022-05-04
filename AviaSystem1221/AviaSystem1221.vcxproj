@@ -28,7 +28,7 @@
     <ClCompile Include="bin\UserInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bin\FileClass.h" />
+    <ClInclude Include="bin\FileClass.hpp" />
     <ClInclude Include="bin\FlightClass.h" />
     <ClInclude Include="bin\Hash.h" />
     <ClInclude Include="bin\Table.h" />

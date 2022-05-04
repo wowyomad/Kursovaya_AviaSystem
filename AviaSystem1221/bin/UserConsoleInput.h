@@ -33,10 +33,10 @@ void InputVar(T& var, const int MIN, const int MAX, const char msg[] = "Ввод: ")
 		if (!(std::cin))
 		{
 			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::(max)(), '\n');
+			std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
 			std::cout << "Некорректный ввод!\n\n";
 		}
-		else if (var < minvalue || var > maxValue)
+		else if (var < MIN || var > MAX)
 		{
 			std::cout << "\nЗначение переменный быть от " << MIN << " до " << MAX << "\n\n";
 		}
