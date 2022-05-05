@@ -19,16 +19,14 @@ int main(int argc, char** argv)
 {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
-
 	system("mode 650");
 	ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
-	_getch();
-	Flight::ReadFromFile();
-	Flight::PrintFlightInfoWhole(InfoMode::Default);
-	Flight::SaveToFile();
-	Flight::ReadFromFile();
-	Flight::PrintFlightInfoWhole(InfoMode::Default);
-	Flight::SaveToFile();
-	_getch();
+	_mkdir("Files");
+
+
+	UI::Start();
+	
+	Flight flight;
+
 	return 0;
 }

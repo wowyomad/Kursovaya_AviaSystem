@@ -1,5 +1,6 @@
 #include "UserClass.h"
 #include "UserConsoleInput.h"
+#include "FileClass.hpp"
 
 #include <fstream>
 #include <vector>
@@ -7,18 +8,19 @@
 #include <iostream>
 #include <cstdio>
 
-extern const char PATH_USERBASE[] = "Files\\UserBase.dat";
+extern const char PATH_FILE_USERS[] = "Files\\UserBase.dat";
+extern const char PATH_FILE_CLIENTS[] = "Files\\ClientBase.dat";
+
 extern const int MIN_PASSWORD = 8;
 extern const int MAX_PASSWORD = 32;
 extern const int MIN_LOGIN = 3;
 extern const int MAX_LOGIN = 32;
-extern const int STRING_RESERVE = 64;
+static const int TICKET_VECTOR_BUFF = 64;
+
 extern const int ENTER_KEY = 13;
 
-std::fstream User::UserFile;
-std::ifstream User::UserFileIn;
-std::ofstream User::UserFileOut;
-std::vector<User> User::userVector;
+std::vector<User> User::vectorUsers;
+std::vector<Client> Client::vectorClients;
 
 User::User()
 {
@@ -45,7 +47,6 @@ User::User(User&& source) noexcept
 BaseClass::BaseClass() : login("default") {};
 
 BaseClass::BaseClass(std::string& login) : login(login) {};
-
 
 User User::operator=(const User& source)
 {
@@ -76,7 +77,7 @@ User User::InputUser(const int access)
 	return *this;
 }
 
-int User::Login()
+int User::LoginUser()
 {
 	std::string password;
 	std::string login;
@@ -87,16 +88,16 @@ int User::Login()
 	int i = loginExist(login);
 	if (i > -1)
 	{
-		if (RNG::hash(password, userVector[i].salt) == userVector[i].hash)
+		if (RNG::hash(password, vectorUsers[i].salt) == vectorUsers[i].hash)
 		{
-			if (userVector[i].access != AccessLevel::NoAcess)
+			if (vectorUsers[i].access != AccessLevel::NoAcess)
 			{
-				*this = userVector[i];
-				return userVector[i].access;
+				*this = vectorUsers[i];
+				return vectorUsers[i].access;
 			}
 			else
 			{
-				return userVector[i].access;
+				return vectorUsers[i].access;
 			}
 		}
 	}
@@ -105,12 +106,27 @@ int User::Login()
 
 int User::loginExist(std::string& newLogin)
 {
-	for (int i = 0; i < userVector.size(); i++)
+	for (int i = 0; i < vectorUsers.size(); i++)
 	{
-		if (userVector[i].login == newLogin)
+		if (vectorUsers[i].login == newLogin)
 			return i;
 	}
 	return -1;
+}
+
+bool User::ReadFile()
+{
+	return File::ReadFile(PATH_FILE_CLIENTS, vectorUsers);
+}
+
+bool User::WriteToFile()
+{
+	return File::WriteToFile(PATH_FILE_USERS, vectorUsers);
+}
+
+int User::GetFileStatus()
+{
+	return File::GetFileStatus(PATH_FILE_CLIENTS, vectorUsers);
 }
 
 bool User::NewUser(const int access)
@@ -119,14 +135,14 @@ bool User::NewUser(const int access)
 	temp.InputUser(access);
 	if (loginExist(temp.login) > -1)
 		return false;
-	userVector.emplace_back(std::move(temp));
+	vectorUsers.emplace_back(std::move(temp));
 	return true;
 }
 
 
 bool User::checkForAdmin()
 {
-	for (auto& it : userVector)
+	for (auto& it : vectorUsers)
 	{
 		if (it.access == AccessLevel::Admin)
 			return true;
@@ -151,7 +167,68 @@ void BaseClass::SortFligths()
 
 
 
-std::fstream operator<<(std::fstream& fs, User& user)
+std::fstream& operator << (std::fstream& fs, User& user)
 {
-	return std::fstream();
+	fs << user.login << ' ';
+	fs << user.hash << ' ';
+	fs << user.salt << ' ';
+	fs << user.access;
+	return fs;
+}
+
+std::fstream& operator >> (std::fstream& fs, User& user)
+{
+	fs >> user.login;
+	fs >> user.hash;
+	fs >> user.salt;
+	fs >> user.access;
+	return fs;
+}
+
+Client::Client()
+{
+	tickets.reserve(TICKET_VECTOR_BUFF);
+	login = "default";
+}
+
+int Client::GetFileStatus()
+{
+	return File::GetFileStatus(PATH_FILE_CLIENTS, vectorClients);
+}
+
+bool Client::ReadFile()
+{
+	return File::ReadFile(PATH_FILE_CLIENTS, vectorClients);
+}
+
+bool Client::WriteToFile()
+{
+	return File::WriteToFile(PATH_FILE_CLIENTS, vectorClients);
+}
+
+std::fstream& operator << (std::fstream& fs, const Client& client)
+{
+	fs << client.login << ' ';
+	for (auto& it : client.tickets)
+	{
+		fs << it << ' ';
+	}
+	fs << '#';
+	return fs;
+}
+
+std::fstream& operator >>(std::fstream& fs, Client& client)
+{
+	fs >> client.login;
+	std::string str;
+	while (fs.peek() != '#')
+	{
+		fs >> str;
+		client.tickets.emplace_back(str);
+	}
+	return fs;
+}
+
+void Admin::SearchUsers()
+{
 }

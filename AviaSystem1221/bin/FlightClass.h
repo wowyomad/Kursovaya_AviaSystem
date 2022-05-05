@@ -6,6 +6,8 @@
 #include <locale>
 #include <vector>
 #include "FileClass.hpp"
+#include "Table.h"
+#include "UserClass.h"
 
 namespace AviaLines
 {
@@ -16,6 +18,11 @@ namespace AviaLines
 		Admin
 	};
 
+	enum TicketType
+	{
+		Economy,
+		Business
+	};
 	struct Location
 	{
 		std::string departure;
@@ -35,8 +42,10 @@ namespace AviaLines
 		int count = 0;
 	};
 
-	class Ticket
+	class Ticket : public Table::TableInterface
 	{
+	private:
+		int type;
 	protected:
 		std::string id;
 		Time time;
@@ -45,19 +54,40 @@ namespace AviaLines
 
 	public:
 		Ticket();
-		Ticket(const char* id, const Time& time, const Location& loc, const int space)
-			: id(id), time(time), loc(loc), space(space) {};
+		Ticket(int type);
+		Ticket(const int type, 
+			const char* id,
+			const Time& time,
+			const Location& loc,
+			const int space)
+			: type(type), id(id), time(time), loc(loc), space(space) {};
 		Ticket(const Ticket& source);
 		Ticket(Ticket&& source);
 
+		void setId(const std::string& id);
+		void setLocDeparture(const std::string& location);
+		void setLocArrival(const std::string& location);
+		void setTimeDeparture(tm& time);
+		void setDateDepatrue(tm& time);
+		void setTimeArrival(tm& time);
+
+		//Методы из интерфейса TableInterface
+		void PrintInfo(const int mode = InfoMode::Default, const int& count = 0) override;
+		void PrintInfoWithTop(const int mode = InfoMode::Default) override;
+		void PrintTopRow(const int mode = InfoMode::Default) override;
+		void PrintInfoWhole(const int mode = InfoMode::Default) override {};
+
+		Ticket& operator =(const Ticket& other);
+
+		friend class Client;
+
 	};
 
-	class Flight : public Ticket
+	class Flight : public Ticket, public Table::TableInterface
 	{
 		Ticket_Container ticketBusiness;
 		Ticket_Container ticketEconomy;
 
-		static std::fstream fileFlights;
 		static std::vector<Flight> vectorFligths;
 
 	public:
@@ -66,32 +96,31 @@ namespace AviaLines
 		Flight(const Flight& source);
 		Flight(Flight&& source);
 		 
-		void setId(const std::string& id);
-		void setLocDeparture(const std::string& location);
-		void setLocArrival(const std::string& location);
-		void setTimeDeparture(tm& time);
-		void setDateDepatrue(tm& time);
-		void setTimeArrival(tm& time);
 		void setPriceBusiness(const int price);
 		void setPriceEconomy(const int price);
 		void setCountBusiness(const int count);
 		void setCountEconomy(const int count);
 
+		Ticket GenerateTicket(const int type);
+		bool TakeTicketBusiness();
+		bool TakeTicketEconomy();
+
 		void InputInfo();
-
-		void PrintFlightInfo(const int mode = InfoMode::Default, const int& count = 1);
-		void PrintFlightInfo_withTop(const int mode = InfoMode::Default);
-		static void PrintFlightInfoWhole(const int mode = InfoMode::Default);
-		static void PrintTopRaw(const int mode = InfoMode::Default);
-
 		void PushToVector();
-		static bool SaveToFile();
-		static bool ReadFromFile();
+		static int GetFileStatus();
+		static bool WriteToFile();
+		static bool ReadFile();
 
 		bool ValidateInfo();
 
-		friend std::fstream& operator << (std::fstream& fs, AviaLines::Flight& flight);
-		friend std::fstream& operator >> (std::fstream& fs, AviaLines::Flight& flight);
+		friend std::fstream& operator << (std::fstream& fs,const Flight& flight);
+		friend std::fstream& operator >> (std::fstream& fs,Flight& flight);
+
+		//Методы из интерфейса TableInterface
+		void PrintInfo(const int mode = InfoMode::Default, const int& count = 1) override;
+		void PrintInfoWithTop(const int mode = InfoMode::Default) override;
+		void PrintInfoWhole(const int mode = InfoMode::Default) override;
+		void PrintTopRow(const int mode = InfoMode::Default) override;
 	};
 
 	void GenerateId(const std::string& leftPart, const int rightPart);

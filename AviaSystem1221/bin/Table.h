@@ -16,4 +16,12 @@ namespace Table
 		Up = 4,
 		Bottom = 5
 	};
+
+	class TableInterface
+	{
+		virtual void PrintInfo(const int mode, const int& count = 1) = 0;
+		virtual void PrintInfoWithTop(const int mode) = 0;
+		virtual void PrintInfoWhole(const int mode) = 0;
+		virtual void PrintTopRow(const int mode) = 0;
+	};
 }

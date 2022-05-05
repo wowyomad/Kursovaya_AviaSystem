@@ -4,10 +4,11 @@
 #include "Table.h"
 #include <iomanip>
 
-#define CONSOLE_WIDTH 186
-#define CELL_WIDTH 23
 
-extern const std::string PATH_USERBASE;
+extern const char PATH_FILE_USERS[];
+extern const char PATH_FILE_FLIGHTS[];
+extern const int CONSOLE_WIDTH;
+extern const int CELL_WIDTH;
 
 const char noFileMsg[] = "Не сущетсвует файла по пути: ";
 const char newFileMsg[] = "Будет создан новый файл.";
@@ -16,8 +17,13 @@ const char newAdminMsg[] = "Введенные вами данные будут использоваться для входа
 const char unknownErrFileMsg[] = "Непредвиденная ошибка при открытии пользовательской базы";
 const char registrationFailMsg[] = "Пользователь с таким логином уже существует.";
 
-void Start()
+void UI::Start()
 {
+	const char helloMsg1[] = "Добро пожаловуть в информационную систему по билетикам";
+	const char helloMsg2[] = "AviaSystem1221";
+
+	Table::PrintCenteredLine(helloMsg1, CONSOLE_WIDTH, '-');
+	Table::PrintCenteredLine(helloMsg2, CONSOLE_WIDTH, '-');
 
 }
 

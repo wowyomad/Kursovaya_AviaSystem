@@ -28,6 +28,7 @@ public:
 			file.get();
 		}
 	}
+
 	template <class T>
 	static bool WriteVectorToFile(std::fstream& file, std::vector<T>& vector)
 	{
@@ -41,9 +42,41 @@ public:
 		}
 		file << vector[limiter];
 	}
-	int getFileInfo(std::fstream& file, size_t& fileSize)
-	{
-		return 0;
-	}
-};
 
+	template <class T>
+	static bool ReadFile(const char* path, std::vector<T>& vector)
+	{
+		std::fstream file(path, std::ios::in);
+		bool state = ReadFileToVector(file, vector);
+		file.close();
+		return state;
+	}
+
+	template <class T>
+	static bool  WriteToFile(const char* path, std::vector<T>& vector)
+	{
+		std::fstream file(path, std::ios::out);
+		bool state = WriteVectorToFile(file, vector);
+		file.close();
+		return state;
+	}
+
+	template<class T>
+	static int GetFileStatus(const char* path, std::vector<T>& vector)
+	{
+		std::fstream file(path, std::ios::in);
+		if (file.is_open())
+		{
+			int state;
+			file.seekg(0, std::ios::end);
+			if (file.tellg() > 0)
+				state = FileStatus::Opened;
+			else
+				state = FileStatus::Empty;
+			file.close();
+			return state;
+		}
+		else return FileStatus::NotOpened;
+	}
+	
+};

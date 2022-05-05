@@ -5,6 +5,9 @@
 #include <iostream>
 #include <iomanip>
 
+extern const int CONSOLE_WIDTH = 212;
+extern const int CELL_WIDTH = 23;
+
 void Table::PrintCenteredLine(std::string str, const unsigned width, const char fill)
 {
 	unsigned offset = width / 2;
@@ -93,11 +96,3 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 
 	delete[] index;
 }
-
-class TableInterface
-{
-	virtual void PrintInfo();
-	virtual void PrintInfoWithTop();
-	virtual void PrintInfoWhole();
-	virtual void PrintTopRow();
-};
