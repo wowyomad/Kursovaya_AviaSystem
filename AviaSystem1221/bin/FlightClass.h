@@ -5,55 +5,94 @@
 #include <iostream>
 #include <locale>
 #include <vector>
-
 #include "FileClass.hpp"
 
-class Ticket
+namespace AviaLines
 {
-protected:
-	std::string id;
-	std::string locDeparture;
-	std::string locArrival;
-	tm timeArrival;
-	tm timeDeparture;
-	int space;
-};
+	enum InfoMode
+	{
+		Default,
+		User,
+		Admin
+	};
 
-class Flight : public Ticket
-{
-	int priceBsn;
-	int priceEcn;
-	int countBsn;
-	int countEcn;
+	struct Location
+	{
+		std::string departure;
+		std::string arrival;
+	};
 
-	static std::fstream Base_Flights;
-	static std::vector<Flight> flightVector;
+	struct Time
+	{
+		tm tmArrival = { 1,1,1,1,1,1,1,1 };
+		tm tmDeparture = { 1,1,1,1,1,1,1,1 };
+		tm dtDeprature = { 1,1,1,1,1,1,1,1 };
+	};
 
-public:
-	void ReadFileToVector();
-	static void WriteVectorToFile();
-	static int getFileInfo(size_t& fileSize);
+	struct Ticket_Container
+	{
+		int price = 0;
+		int count = 0;
+	};
 
-	void setId(const std::string& id);
-	void setLocDeparture(const std::string& location);
-	void setLocArrival(const std::string& location);
-	void setTimeDeparture(tm& time);
-	void setDateDepatrue(tm& time);
-	void setDateArrival(tm& time);
-	void setPriceBusiness(const int price);
-	void setPriceEconomy(const int price);
-	void setCountBusiness(const int count);
-	void setCountEconomy(const int count);
-	
+	class Ticket
+	{
+	protected:
+		std::string id;
+		Time time;
+		Location loc;
+		int space;
 
+	public:
+		Ticket();
+		Ticket(const char* id, const Time& time, const Location& loc, const int space)
+			: id(id), time(time), loc(loc), space(space) {};
+		Ticket(const Ticket& source);
+		Ticket(Ticket&& source);
 
-	void InputInfo();
+	};
 
-	void PrintFlightInfo();
-	void PrintFlightInfo_withTop();
-	static void PrintTopRaw();
-	static void PrintFlightInfo_vector();
+	class Flight : public Ticket
+	{
+		Ticket_Container ticketBusiness;
+		Ticket_Container ticketEconomy;
 
-	friend std::fstream& operator << (std::fstream& fs, Flight& flight);
-	friend std::fstream& operator >> (std::fstream& fs, Flight& flight);
-};
+		static std::fstream fileFlights;
+		static std::vector<Flight> vectorFligths;
+
+	public:
+		Flight();
+
+		Flight(const Flight& source);
+		Flight(Flight&& source);
+		 
+		void setId(const std::string& id);
+		void setLocDeparture(const std::string& location);
+		void setLocArrival(const std::string& location);
+		void setTimeDeparture(tm& time);
+		void setDateDepatrue(tm& time);
+		void setTimeArrival(tm& time);
+		void setPriceBusiness(const int price);
+		void setPriceEconomy(const int price);
+		void setCountBusiness(const int count);
+		void setCountEconomy(const int count);
+
+		void InputInfo();
+
+		void PrintFlightInfo(const int mode = InfoMode::Default, const int& count = 1);
+		void PrintFlightInfo_withTop(const int mode = InfoMode::Default);
+		static void PrintFlightInfoWhole(const int mode = InfoMode::Default);
+		static void PrintTopRaw(const int mode = InfoMode::Default);
+
+		void PushToVector();
+		static bool SaveToFile();
+		static bool ReadFromFile();
+
+		bool ValidateInfo();
+
+		friend std::fstream& operator << (std::fstream& fs, AviaLines::Flight& flight);
+		friend std::fstream& operator >> (std::fstream& fs, AviaLines::Flight& flight);
+	};
+
+	void GenerateId(const std::string& leftPart, const int rightPart);
+}

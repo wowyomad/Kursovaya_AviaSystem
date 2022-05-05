@@ -3,7 +3,6 @@
 #include <string>
 #include <iostream>
 
-
 //Ввод из консоли в строку. Все символы в консоли заменяются '*'. Ввод ограничен символами(кроме пробела) и английскими буквами.
 void InputPassword(std::string& password, const int min, const int max);
 //Ввод из консоли в строку. Ввод ограничен английскими символами, цифрами и символом '_'(нижний слэш). 
@@ -38,7 +37,7 @@ void InputVar(T& var, const int MIN, const int MAX, const char msg[] = "Ввод: ")
 		}
 		else if (var < MIN || var > MAX)
 		{
-			std::cout << "\nЗначение переменный быть от " << MIN << " до " << MAX << "\n\n";
+			std::cout << "\nМинимум: " << MIN << "\nМаксимум: " << MAX << "\n\n";
 		}
 		else break;
 	}

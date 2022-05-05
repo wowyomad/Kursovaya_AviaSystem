@@ -42,10 +42,10 @@ User::User(User&& source) noexcept
 	access = source.access;
 }
 
-User::~User()
-{
+BaseClass::BaseClass() : login("default") {};
 
-}
+BaseClass::BaseClass(std::string& login) : login(login) {};
+
 
 User User::operator=(const User& source)
 {
@@ -132,6 +132,21 @@ bool User::checkForAdmin()
 			return true;
 	}
 	return false;
+}
+
+void BaseClass::ShowFlights(const int mode)
+{
+
+}
+
+void BaseClass::SearchFlights()
+{
+
+}
+
+void BaseClass::SortFligths()
+{
+	
 }
 
 

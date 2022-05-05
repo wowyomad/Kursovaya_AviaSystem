@@ -28,6 +28,7 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 		}
 		return maxLength;
 	}();
+	unsigned size = stringVector.size();
 	unsigned lines = maxLength % (width - 2) == 0 ? 0 : 1;
 	lines += maxLength / (width - 2);
 	unsigned line_length = width - 2;
@@ -57,12 +58,12 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 		std::cout << innerSideBorder;
 	std::cout << std::setw(width - 1) << std::setfill(' ') << rightBorder << '\n';
 
-	unsigned* index = new unsigned[stringVector.size()]{ 0 };
+	unsigned* index = new unsigned[size]{ 0 };
 	for (int k = 0; k < lines; k++)
 	{
 		int m = 0;
 		std::cout << leftBorder;
-		for (int m = 0; m < stringVector.size(); m++)
+		for (int m = 0; m < size; m++)
 
 		{
 			if (stringVector[m][index[m]] == ' ') index[m]++;
@@ -74,7 +75,7 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 				j++;
 			}
 			std::cout << std::setw(line_length - j + 1) << std::setfill(' ');
-			if (m == stringVector.size() - 1) std::cout << rightBorder;
+			if (m == size - 1) std::cout << rightBorder;
 			else std::cout << innerSideBorder;
 		}
 		if (horizontal == Right || horizontal == Both)
@@ -83,12 +84,20 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 	}
 
 	std::cout << leftBorder << std::setw(width - 1) << std::setfill(downBorder);
-	for (int i = 1; i < stringVector.size() - 1; i++)
+	for (int i = 1; i < size - 1; i++)
 	{
 		std::cout << innerSideBorder << std::setw(width - 1) << std::setfill(downBorder);
 	}
-	if (stringVector.size() > 1) std::cout << innerSideBorder;
+	if (size > 1) std::cout << innerSideBorder;
 	std::cout << std::setw(width - 1) << std::setfill(downBorder) << rightBorder << '\n';
 
 	delete[] index;
 }
+
+class TableInterface
+{
+	virtual void PrintInfo();
+	virtual void PrintInfoWithTop();
+	virtual void PrintInfoWhole();
+	virtual void PrintTopRow();
+};

@@ -13,42 +13,22 @@
 #include <algorithm>
 #include <vector>
 #include <list>
-
-
-
-class Str
-{
-	std::string name;
-	std::string something;
-	int age;
-public:
-	std::string getName() { return name; }
-	Str(std::string str, int age) : name(str), something(str), age(age) {};
-};
+using namespace AviaLines;
 
 int main(int argc, char** argv)
 {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
-	Flight flight;
-	std::vector<Str> arr;
-	arr.push_back(Str("wowow", 25));
-	arr.push_back(Str("b00ba", 35));
-	arr.push_back(Str("aboba", 10));
-	for (auto& it : arr)
-	{
-		std::cout << it.getName() << '\n';
-	}
 
-	std::sort(arr.begin(), arr.end(), []( auto& left,  auto& right)
-		{
-			return left.getName() < right.getName();
-		});
-	for (auto& it : arr)
-	{
-		std::cout << it.getName() << '\n';
-	}
+	system("mode 650");
+	ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
 	_getch();
-	Flight::WriteVectorToFile();
+	Flight::ReadFromFile();
+	Flight::PrintFlightInfoWhole(InfoMode::Default);
+	Flight::SaveToFile();
+	Flight::ReadFromFile();
+	Flight::PrintFlightInfoWhole(InfoMode::Default);
+	Flight::SaveToFile();
+	_getch();
 	return 0;
 }
