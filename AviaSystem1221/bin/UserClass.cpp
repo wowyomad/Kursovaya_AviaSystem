@@ -1,6 +1,7 @@
 #include "UserClass.h"
 #include "UserConsoleInput.h"
 #include "FileClass.hpp"
+#include "Hash.h"
 
 #include <fstream>
 #include <vector>
@@ -19,16 +20,16 @@ static const int TICKET_VECTOR_BUFF = 64;
 
 extern const int ENTER_KEY = 13;
 
-std::vector<User> User::vectorUsers;
+std::vector<Entity> Entity::vectorUsers;
 std::vector<Client> Client::vectorClients;
 
-User::User()
+Entity::Entity()
 {
 	login.reserve(MAX_LOGIN);
 	access = 0;
 }
 
-User::User(const User& source)
+Entity::Entity(const Entity& source)
 {
 	login = source.login;
 	hash = source.hash;
@@ -36,7 +37,7 @@ User::User(const User& source)
 	access = source.access;
 }
 
-User::User(User&& source) noexcept
+Entity::Entity(Entity&& source) noexcept
 {
 	login = std::move(source.login);
 	hash = std::move(source.hash);
@@ -44,11 +45,11 @@ User::User(User&& source) noexcept
 	access = source.access;
 }
 
-BaseClass::BaseClass() : login("default") {};
+BaseClass::BaseClass() : name("default") {};
 
-BaseClass::BaseClass(std::string& login) : login(login) {};
+BaseClass::BaseClass(std::string& login) : name(login) {};
 
-User User::operator=(const User& source)
+Entity Entity::operator=(const Entity& source)
 {
 	login = source.login;
 	hash = source.hash;
@@ -57,7 +58,7 @@ User User::operator=(const User& source)
 	return *this;
 }
 
-User User::operator = (User&& source) noexcept
+Entity Entity::operator = (Entity&& source) noexcept
 {
 	login = std::move(source.login);
 	hash = std::move(source.hash);
@@ -66,18 +67,18 @@ User User::operator = (User&& source) noexcept
 	return *this;
 }
 
-User User::InputUser(const int access)
+Entity Entity::InputUser(const int access)
 {
 	InputLogin(login, MIN_LOGIN, MAX_LOGIN);
 	std::string password;
 	InputPassword(password, MIN_PASSWORD, MAX_PASSWORD);
-	salt = RNG::salt();
+	salt = RNG::randomNumber();
 	hash = RNG::hash(password, salt);
 	this->access = access;
 	return *this;
 }
 
-int User::LoginUser()
+int Entity::LoginEntity()
 {
 	std::string password;
 	std::string login;
@@ -90,9 +91,8 @@ int User::LoginUser()
 	{
 		if (RNG::hash(password, vectorUsers[i].salt) == vectorUsers[i].hash)
 		{
-			if (vectorUsers[i].access != AccessLevel::NoAcess)
+			if (vectorUsers[i].access != AccessLevel::NoAcessLvl)
 			{
-				*this = vectorUsers[i];
 				return vectorUsers[i].access;
 			}
 			else
@@ -104,7 +104,7 @@ int User::LoginUser()
 	return -1;
 }
 
-int User::loginExist(std::string& newLogin)
+int Entity::loginExist(std::string& newLogin)
 {
 	for (int i = 0; i < vectorUsers.size(); i++)
 	{
@@ -114,37 +114,56 @@ int User::loginExist(std::string& newLogin)
 	return -1;
 }
 
-bool User::ReadFile()
+void Entity::CreateFile()
 {
-	return File::ReadFile(PATH_FILE_CLIENTS, vectorUsers);
+	std::fstream file(PATH_FILE_CLIENTS);
+	file.close();
 }
 
-bool User::WriteToFile()
+bool Entity::ReadFile()
+{
+	if (GetFileStatus() == FileStatus::Opened)
+		return File::ReadFile(PATH_FILE_CLIENTS, vectorUsers);
+	else return false;
+}
+
+bool Entity::WriteToFile()
 {
 	return File::WriteToFile(PATH_FILE_USERS, vectorUsers);
 }
 
-int User::GetFileStatus()
+void Entity::VectorReserve(const size_t size)
+{
+	vectorUsers.reserve(size);
+}
+
+std::string Entity::getLogin()
+{
+	return login;
+}
+
+int Entity::GetFileStatus()
 {
 	return File::GetFileStatus(PATH_FILE_CLIENTS, vectorUsers);
 }
 
-bool User::NewUser(const int access)
+bool Entity::AddNewEntity(const int access)
 {
-	User temp;
+	Entity temp;
 	temp.InputUser(access);
 	if (loginExist(temp.login) > -1)
 		return false;
-	vectorUsers.emplace_back(std::move(temp));
+	else
+		vectorUsers.emplace_back(std::move(temp));
 	return true;
 }
 
 
-bool User::checkForAdmin()
+bool Entity::CheckFileForAdmin()
 {
 	for (auto& it : vectorUsers)
 	{
-		if (it.access == AccessLevel::Admin)
+		if (it.access == AccessLevel::AdminLvl)
 			return true;
 	}
 	return false;
@@ -162,12 +181,10 @@ void BaseClass::SearchFlights()
 
 void BaseClass::SortFligths()
 {
-	
+
 }
 
-
-
-std::fstream& operator << (std::fstream& fs, User& user)
+std::fstream& operator << (std::fstream& fs, Entity& user)
 {
 	fs << user.login << ' ';
 	fs << user.hash << ' ';
@@ -176,7 +193,7 @@ std::fstream& operator << (std::fstream& fs, User& user)
 	return fs;
 }
 
-std::fstream& operator >> (std::fstream& fs, User& user)
+std::fstream& operator >> (std::fstream& fs, Entity& user)
 {
 	fs >> user.login;
 	fs >> user.hash;
@@ -188,7 +205,73 @@ std::fstream& operator >> (std::fstream& fs, User& user)
 Client::Client()
 {
 	tickets.reserve(TICKET_VECTOR_BUFF);
-	login = "default";
+	name = "default";
+}
+
+Client::Client(const std::string& login)
+{
+	this->name = login;
+}
+
+Client::Client(const Client& source)
+{
+	*this = source;
+}
+
+bool Client::BookTicket(Flight& flight, const int type)
+{
+	if (type == TicketType::Business || type == TicketType::Economy)
+	{
+		if (flight.TicketAvailable(type))
+		{
+			tickets.emplace_back(std::move(flight.GenerateTicketID(type)));
+			flight.TakeTicket(type);
+			return true;
+		}
+	}
+	return false;
+}
+
+void Client::PrintTickets()
+{
+	if (tickets.size() == 0)
+	{
+		std::cout << "У вас нет билетов.\n";
+	}
+
+	std::vector<Ticket> ticketsInfo;
+	ticketsInfo.reserve(tickets.size());
+	Ticket ticket;
+	for (auto& it : tickets)
+	{
+		ticket = Flight::LookUpForFlight(it);
+		if (ticket.getType() != -1)
+		{
+			ticket.setType(std::atoi(&(it.back())));
+			ticketsInfo.emplace_back(std::move(ticket));
+		}
+		else
+			std::cout << "Билет " << it << " не найден.\n";
+	}
+
+	if (ticketsInfo.size() != 0)
+	{
+		Ticket::PrintTopRow();
+		for (auto& it : ticketsInfo)
+		{
+			it.PrintInfo();
+		}
+	}
+	else
+	{
+		std::cout << "Информации по вашим билетам не найдено.\n";
+	}
+}
+
+void Client::CreateFile()
+{
+	std::fstream file(PATH_FILE_CLIENTS, std::ios::out);
+	file.close();
 }
 
 int Client::GetFileStatus()
@@ -198,7 +281,9 @@ int Client::GetFileStatus()
 
 bool Client::ReadFile()
 {
-	return File::ReadFile(PATH_FILE_CLIENTS, vectorClients);
+	if (GetFileStatus() == FileStatus::Opened)
+		return File::ReadFile(PATH_FILE_CLIENTS, vectorClients);
+	else return false;
 }
 
 bool Client::WriteToFile()
@@ -206,22 +291,16 @@ bool Client::WriteToFile()
 	return File::WriteToFile(PATH_FILE_CLIENTS, vectorClients);
 }
 
-std::fstream& operator << (std::fstream& fs, const Client& client)
+void Client::VectorReserve(const size_t VECTOR_BUFF)
 {
-	fs << client.login << ' ';
-	for (auto& it : client.tickets)
-	{
-		fs << it << ' ';
-	}
-	fs << '#';
-	return fs;
+	vectorClients.reserve(VECTOR_BUFF);
 }
 
 std::fstream& operator >>(std::fstream& fs, Client& client)
 {
-	fs >> client.login;
+	fs >> client.name;
 	std::string str;
-	while (fs.peek() != '#')
+	while (fs.peek() != '\n')
 	{
 		fs >> str;
 		client.tickets.emplace_back(str);
@@ -229,6 +308,26 @@ std::fstream& operator >>(std::fstream& fs, Client& client)
 	return fs;
 }
 
+std::fstream& operator << (std::fstream& fs, Client& client)
+{
+	fs << client.name << ' ';
+	for (auto& it : client.tickets)
+	{
+		fs << it << ' ';
+	}
+	return fs;
+}
+
+void Admin::SortUsers()
+{
+
+}
+
+void Admin::EditUsers()
+{
+}
+
 void Admin::SearchUsers()
 {
+
 }

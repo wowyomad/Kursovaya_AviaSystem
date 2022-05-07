@@ -2,10 +2,12 @@
 
 #include <string>
 #include <vector>
-namespace Table
+
+#include "common.h"
+namespace FormattedOutput
 {
 	void PrintCenteredLine(std::string str, const unsigned width, const char fill = ' ');
-	void PrintRow(const std::vector<std::string>& vectorString, const unsigned width, const int horizontal = 1, const int vertical = 1, const int inner = 1);
+	void PrintCenteredRow(const std::vector<std::string>& vectorString, const unsigned width, const int horizontal = 1, const int vertical = 1, const int inner = 1, const int consoleWidth = CONSOLE_WIDTH);
 
 	enum Border
 	{

@@ -191,13 +191,34 @@ std::string getTimeString(const tm& time)
 	return os.str();
 }
 
+bool AcceptAction(const char* msg)
+{
+	while (true)
+	{
+		std::cout << "Подтвердите действие: " << msg << "\n\n";
+		std::cout << "1.Подтвердить\n"
+			<< "0.Отмена\n";
+		char ch = _getch();
+		switch (ch)
+		{
+		case '1':
+			return true;
+		case '2':
+			return false;
+		default:
+			std::cout << "Неверный ввод\n\n";
+			break;
+		}
+	}
+}
 
-bool is_russian(const unsigned char ch)
+
+bool is_russian(const char ch)
 {
 	return ch >= 'а' && ch <= 'я' || ch >= 'А' && ch <= 'Я';
 }
 
-bool is_english(const unsigned char ch)
+bool is_english(const char ch)
 {
 	return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z';
 }

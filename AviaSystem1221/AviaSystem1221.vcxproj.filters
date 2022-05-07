@@ -59,5 +59,8 @@
     <ClInclude Include="bin\FileClass.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bin\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

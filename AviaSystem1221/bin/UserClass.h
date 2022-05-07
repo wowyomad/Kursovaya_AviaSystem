@@ -1,50 +1,58 @@
 #pragma once
 #include <string>
 #include <vector>
-
-#include "Hash.h"
 #include "FlightClass.h"
-class User
+#include "common.h"
+class Flight;
+
+enum AccessLevel
+{
+	NoAcessLvl = 0,
+	ClientLvl = 1,
+	AdminLvl = 2
+};
+
+class Entity
 {
 private:
-	static std::vector<User> vectorUsers;
+	static std::vector<Entity> vectorUsers;
 	std::string login;
 	std::string hash;
 	std::string salt;
 	int access;
 public:
-	enum AccessLevel
-	{
-		NoAcess = 0,
-		Client = 1,
-		Admin = 2
-	};
-	User();
-	User(const User& user);
-	User(User&& user) noexcept;
+	Entity();
+	Entity(const Entity& user);
+	Entity(Entity&& user) noexcept;
 
+	static void CreateFile();
 	static int GetFileStatus();
 	static bool ReadFile();
 	static bool WriteToFile();
+	static void VectorReserve(const size_t size = VECTOR_BUFF);
 
-	friend std::fstream& operator << (std::fstream& fs, User& user);
-	friend std::fstream& operator >> (std::fstream& fs, User& user);
-	User operator = (const User& source);
-	User operator = (User&& source) noexcept;
-	User InputUser(const int access);
-	int LoginUser();
-	static bool NewUser(const int access = AccessLevel::NoAcess);
-	static bool checkForAdmin();
+	std::string getLogin();
+
+	Entity InputUser(const int access);
+	static int LoginEntity();
+
+	static bool AddNewEntity(const int access = AccessLevel::NoAcessLvl);
+	static bool CheckFileForAdmin();
 	static int loginExist(std::string& login);
 
+	Entity operator = (const Entity& source);
+	Entity operator = (Entity&& source) noexcept;
+
+	friend std::fstream& operator << (std::fstream& fs, Entity& user);
+	friend std::fstream& operator >> (std::fstream& fs, Entity& user);
 };
 
 class BaseClass
 {
 protected:
-	std::string login;
+	std::string name;
 public:
-	virtual void ShowFlights(const int mode); 
+	virtual void ShowFlights(const int mode);
 	virtual void SearchFlights();
 	virtual void SortFligths();
 	BaseClass();
@@ -56,11 +64,12 @@ class Admin : public BaseClass
 {
 public:
 	Admin();
-	
 	void SortUsers();
 	void SearchUsers();
 	void ShowUser();
 	void EditUsers();
+
+	void EditFlights();
 };
 
 class Client : public BaseClass
@@ -70,13 +79,17 @@ private:
 	std::vector<std::string> tickets;
 public:
 	Client();
-	bool BuyTicket();
+	Client(const std::string& login);
+	Client(const Client& source);
 
+	bool BookTicket(Flight& flight, const int type);
+	void PrintTickets();
+
+	static void CreateFile();
 	static int GetFileStatus();
 	static bool ReadFile();
 	static bool WriteToFile();
-
-	friend class Admin;
-	friend std::fstream& operator<<(std::fstream& fs,const Client& client);
+	static void VectorReserve(const size_t size = VECTOR_BUFF);
+	friend std::fstream& operator << (std::fstream& fs, Client& client);
 	friend std::fstream& operator>>(std::fstream& fs, Client& client);
 };

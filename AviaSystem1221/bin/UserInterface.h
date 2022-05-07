@@ -1,9 +1,17 @@
 #pragma once
-#include <string>
-
+#include "UserClass.h"
+#include "common.h"
 namespace UI
 {
 	void Start();
-	void Register();
+	void Main();
+	void Register(const int accessLevel = AccessLevel::NoAcessLvl);
 	void Login();
+
+
+	void AdminMain();
+
+
+	void ClientMain();
+
 }

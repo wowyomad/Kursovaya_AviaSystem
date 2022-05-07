@@ -1,5 +1,4 @@
 #pragma once
-
 #include <string>
 #include <iostream>
 
@@ -17,9 +16,10 @@ void InputTime(tm& time, const char* msg = nullptr);
 std::string getDateString(const tm& time);
 //Возврат строки в виде "{time.tm_hour}:{time.tm_min}"
 std::string getTimeString(const tm& time);
+bool AcceptAction(const char* msg);
 
-bool is_russian(const unsigned char ch);
-bool is_english(const unsigned char ch);
+bool is_russian(const char ch);
+bool is_english(const char ch);
 
 //Ввод из консоли в шаблонную переменную var встроенного типа. Попытка передечи объекта класса или указателя типа char (char*, char[]) вызывают ошибку.
 template <class T>

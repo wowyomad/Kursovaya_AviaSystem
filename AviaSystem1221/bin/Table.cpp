@@ -5,10 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-extern const int CONSOLE_WIDTH = 212;
-extern const int CELL_WIDTH = 23;
-
-void Table::PrintCenteredLine(std::string str, const unsigned width, const char fill)
+void FormattedOutput::PrintCenteredLine(std::string str, const unsigned width, const char fill)
 {
 	unsigned offset = width / 2;
 	size_t half_length = str.length() / 2;
@@ -18,9 +15,9 @@ void Table::PrintCenteredLine(std::string str, const unsigned width, const char 
 	std::cout << std::setfill(' ');
 }
 
-void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigned width, const int horizontal, const int vertical, const int inner)
+void FormattedOutput::PrintCenteredRow(const std::vector<std::string>& stringVector, const unsigned cellWidth, const int horizontal, const int vertical, const int inner, const int consoleWidth)
 {
-	if (width < 3) return;
+	if (cellWidth < 3) return;
 	unsigned maxLength = [stringVector]()->unsigned
 	{
 		unsigned maxLength = 0;
@@ -31,10 +28,11 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 		}
 		return maxLength;
 	}();
+	unsigned int offset = (consoleWidth - cellWidth * stringVector.size()) / 2;
 	unsigned size = stringVector.size();
-	unsigned lines = maxLength % (width - 2) == 0 ? 0 : 1;
-	lines += maxLength / (width - 2);
-	unsigned line_length = width - 2;
+	unsigned lines = maxLength % (cellWidth - 2) == 0 ? 0 : 1;
+	lines += maxLength / (cellWidth - 2);
+	unsigned line_length = cellWidth - 2;
 
 	char downBorder = (vertical == Bottom || vertical == Both) ? '_' : ' ';
 	char leftBorder = (horizontal == Left || horizontal == Both) ? '|' : ' ';
@@ -44,27 +42,30 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 
 	if (vertical == Up || vertical == Both)
 	{
+		std::cout << std::setw(offset) << std::setfill(' ') << ' ';
 		std::cout << ' ';
 		for (int i = 0; i < stringVector.size(); i++)
 		{
-			std::cout << std::setw(width - 1) << std::setfill('_') << ' ';
+			std::cout << std::setw(cellWidth - 1) << std::setfill('_') << ' ';
 		}
 		std::cout << '\n';
 	}
 
-	std::cout << leftBorder << std::setw(width - 1) << std::setfill(' ');
+	std::cout << std::setw(offset) << std::setfill(' ') << ' ';
+	std::cout << leftBorder << std::setw(cellWidth - 1) << std::setfill(' ');
 	for (int i = 1; i < stringVector.size() - 1; i++)
 	{
-		std::cout << innerSideBorder << std::setw(width - 1) << std::setfill(' ');
+		std::cout << innerSideBorder << std::setw(cellWidth - 1) << std::setfill(' ');
 	}
 	if (stringVector.size() > 1)
 		std::cout << innerSideBorder;
-	std::cout << std::setw(width - 1) << std::setfill(' ') << rightBorder << '\n';
+	std::cout << std::setw(cellWidth - 1) << std::setfill(' ') << rightBorder << '\n';
 
 	unsigned* index = new unsigned[size]{ 0 };
 	for (int k = 0; k < lines; k++)
 	{
 		int m = 0;
+		std::cout << std::setw(offset) << std::setfill(' ') << ' ';
 		std::cout << leftBorder;
 		for (int m = 0; m < size; m++)
 
@@ -85,14 +86,14 @@ void Table::PrintRow(const std::vector<std::string>& stringVector, const unsigne
 			printf("\b \b%c", rightBorder);
 		std::cout << '\n';
 	}
-
-	std::cout << leftBorder << std::setw(width - 1) << std::setfill(downBorder);
+	std::cout << std::setw(offset) << std::setfill(' ') << ' ';
+	std::cout << leftBorder << std::setw(cellWidth - 1) << std::setfill(downBorder);
 	for (int i = 1; i < size - 1; i++)
 	{
-		std::cout << innerSideBorder << std::setw(width - 1) << std::setfill(downBorder);
+		std::cout << innerSideBorder << std::setw(cellWidth - 1) << std::setfill(downBorder);
 	}
 	if (size > 1) std::cout << innerSideBorder;
-	std::cout << std::setw(width - 1) << std::setfill(downBorder) << rightBorder << '\n';
+	std::cout << std::setw(cellWidth - 1) << std::setfill(downBorder) << rightBorder << '\n';
 
 	delete[] index;
 }

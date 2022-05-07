@@ -3,7 +3,7 @@
 #include <cmath>
 #include "Hash.h"
 
-std::string RNG::salt(const int size)
+std::string RNG::randomNumber(const int size)
 {
 	std::string salt;
 	unsigned long long value;
@@ -55,7 +55,7 @@ std::string RNG::hash(std::string password, std::string key, const int hash_leng
 			{
 				int m = i + j;
 				hashed[i] += m + (key_value3 * (m - 1) % (m + 1)) + (key_value3 * (m - 1) % (m + 1))
-						+ hashed[i] % unhashed.length() + unhashed[j] % ('z' - 'a');
+					+ hashed[i] % unhashed.length() + unhashed[j] % ('z' - 'a');
 			}
 			while (hashed[i] > 'z') (hashed[i]) -= 'z' - 'a';
 			while (hashed[i] < 'a') hashed[i] += 'z' - 'a';
