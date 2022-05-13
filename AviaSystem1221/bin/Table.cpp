@@ -5,17 +5,21 @@
 #include <iostream>
 #include <iomanip>
 
-void FormattedOutput::PrintCenteredLine(std::string str, const unsigned width, const char fill)
+void ClFomrat::PrintCenteredLine(std::string str, const unsigned width, const char fill)
 {
 	unsigned offset = width / 2;
 	size_t half_length = str.length() / 2;
 	std::cout << std::setw(offset) << std::setfill(fill)
 		<< str.substr(0, half_length) << str.substr(half_length)
 		<< std::setw(offset - str.length() + half_length) << std::setfill(fill) << '\n';
-	std::cout << std::setfill(' ');
 }
 
-void FormattedOutput::PrintCenteredRow(const std::vector<std::string>& stringVector, const unsigned cellWidth, const int horizontal, const int vertical, const int inner, const int consoleWidth)
+void ClFomrat::PrintCenteredRow(const std::vector<std::string>& stringVector, 
+	const int cellWidth,
+	const int horizontal, 
+	const int vertical, 
+	const int inner, 
+	const int consoleWidth)
 {
 	if (cellWidth < 3) return;
 	unsigned maxLength = [stringVector]()->unsigned
@@ -96,4 +100,10 @@ void FormattedOutput::PrintCenteredRow(const std::vector<std::string>& stringVec
 	std::cout << std::setw(cellWidth - 1) << std::setfill(downBorder) << rightBorder << '\n';
 
 	delete[] index;
+}
+
+void ClFomrat::PrintCenteredNewLine(std::string str, const unsigned width, const char fill)
+{
+	PrintCenteredLine(str, width, fill);
+	std::cout << '\n';
 }

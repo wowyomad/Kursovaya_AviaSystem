@@ -10,7 +10,8 @@ enum InfoMode
 {
 	Default,
 	UserMode,
-	AdminMode
+	AdminMode,
+	AdminMode_noCount
 };
 
 enum TicketType
@@ -44,7 +45,7 @@ protected:
 public:
 
 	Ticket();
-	Ticket(int type);
+	Ticket(const int type);
 	Ticket(const int type,
 		const char* id,
 		const Time& time,
@@ -55,24 +56,25 @@ public:
 	Ticket(const Ticket& source, const std::string& fullTicketId);
 	Ticket(Ticket&& source) noexcept;
 
-	void setId(const std::string& id);
-	std::string getId();
 	void setLocDeparture(const std::string& location);
 	void setLocArrival(const std::string& location);
 	void setTimeDeparture(tm& time);
 	void setDateDepatrue(tm& time);
 	void setTimeArrival(tm& time);
 
+	void setId(const std::string& id);
+	std::string getId() const;
 	void setType(const int type);
-	int getType();
+	int getType() const;
 
+	tm getDateDep() const;
 
-	virtual void PrintInfo(const int mode = InfoMode::Default, const int& count = 0);
-	virtual void PrintInfoWithTop(const int mode = InfoMode::Default);
+	virtual void PrintInfo(const int mode = InfoMode::Default, const int& count = 0) const;
+	virtual void PrintInfoWithTop(const int mode = InfoMode::Default) const;
 	static void PrintTopRow(const int mode = InfoMode::Default);
 
 	Ticket& operator =(const Ticket& other);
-	Ticket& operator = (Ticket&& other);
+	Ticket& operator = (Ticket&& other) noexcept;
 };
 
 class Flight : public Ticket
@@ -87,41 +89,58 @@ private:
 	Ticket_Container ticketBusiness;
 	Ticket_Container ticketEconomy;
 
-	static std::vector<Flight> vectorFligths;
+	std::string GenerateTicketID(const int type) const;
+	void TakeTicket(const int type);
+	bool TicketAvailable(const int type) const;
+
+	static std::vector<Flight> vector;
 
 public:
 	Flight();
-
 	Flight(const Flight& source);
-	Flight(Flight&& source);
+	Flight(Flight&& source) noexcept;
 
 	void setPriceBusiness(const int price);
 	void setPriceEconomy(const int price);
 	void setCountBusiness(const int count);
 	void setCountEconomy(const int count);
+	int getType() = delete;
+	static std::string GenerateTicketID(const int index, const int type);
+	static void TakeTicket(const int index, const int type);
+	static bool TicketAvailable(const int index, const int type);
 
-	std::string GenerateTicketID(const int type);
-	void TakeTicket(const int type);
-	bool TicketAvailable(const int ype);
-
-	void InputInfo();
+	bool InputInfo();
 	void PushToVector();
-	static void CreateFile();
+	static int getVectorSize();
+	static void CreateNewFile();
 	static int GetFileStatus();
 	static bool WriteToFile();
 	static bool ReadFile();
 	static void VectorReserve(const size_t size = VECTOR_BUFF);
-	static Ticket LookUpForFlight(std::string id);
+	static Ticket GetFlightTicket(const std::string& fullTicketID);
+	static Flight* GetFlight(const int index);
+	static int GetFlightIndex(std::string& id);
 	bool ValidateInfo();
-
-	int getType() = delete;
-
 	friend std::fstream& operator << (std::fstream& fs, const Flight& flight);
 	friend std::fstream& operator >> (std::fstream& fs, Flight& flight);
+	Flight& operator = (const Flight& flight);
+	Flight& operator = (Flight&& flight) noexcept;
 
-	void PrintInfo(const int mode = InfoMode::Default, const int& count = 1);
-	void PrintInfoWithTop(const int mode = InfoMode::Default);
+	void PrintInfo(const int mode = InfoMode::Default, const int& count = 1) const override;
+	void PrintInfoWithTop(const int mode = InfoMode::Default) const override;
 	static void PrintInfoWhole(const int mode = InfoMode::Default);
 	static void PrintTopRow(const int mode = InfoMode::Default);
-};
 
+	static void CopyVector(std::vector<Flight>& destination);
+	static bool Sort(const int type);
+	static std::vector<Flight> Search(const int type, const std::string& input);
+
+private:
+	static void SortById();
+	static void SortByDate();
+	static void SortByDep();
+	static void SortByArr();
+	static void SearchById(std::vector<Flight>& vec, const std::string& input);
+	static void SearchByDep(std::vector<Flight>& vec, const std::string& input);
+	static void SearchByArr(std::vector<Flight>& vec, const std::string& input);
+};

@@ -25,6 +25,7 @@ public:
 			vector.emplace_back(std::move(temp));
 			file.get();
 		}
+		return true;
 	}
 
 	template <class T>
@@ -37,6 +38,7 @@ public:
 			file << vector[i] << '\n';
 		}
 		file << vector[limiter];
+		return true;
 	}
 
 	template <class T>
@@ -51,6 +53,7 @@ public:
 	template <class T>
 	static bool  WriteToFile(const char* path, std::vector<T>& vector)
 	{
+		if (vector.size() < 1) return false;
 		std::fstream file(path, std::ios::out);
 		bool state = WriteVectorToFile(file, vector);
 		file.close();
@@ -72,7 +75,7 @@ public:
 			file.close();
 			return state;
 		}
-		else return FileStatus::NotOpened;
+		return FileStatus::NotOpened;
 	}
 	
 };

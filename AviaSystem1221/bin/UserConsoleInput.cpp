@@ -49,6 +49,7 @@ void InputPassword(std::string& password, const int min, const int max)
 		}
 		else if (is_russian(ch))
 		{
+			password.clear();
 			std::cout << "\nОшибка. Введен русский символ!\n\n"
 				<< "Пароль: ";
 		}
@@ -71,6 +72,8 @@ void InputLogin(std::string& login, const int min, const int max)
 		ch = _getch();
 		if (ch == ENTER_KEY)
 		{
+			if (login.length() == 0)
+				continue;
 			if (login.length() < min)
 			{
 				std::cout << "\nОшибка. Логин слишком короткий\n\n"
@@ -131,7 +134,7 @@ void InputDate(tm& date, const char* msg)
 	int minDay = 1;
 	int maxDay = 0;
 
-	InputVar(date.tm_year, currentTime.tm_year + 1900, INT_MAX, "Год: ");
+	InputVar(date.tm_year, currentTime.tm_year + 1900, currentTime.tm_year + 1900 + 10, "Год: ");
 	date.tm_year -= 1900;
 	if (date.tm_year == currentTime.tm_year)
 		minMonth = currentTime.tm_mon;
