@@ -16,8 +16,8 @@ enum InfoMode
 
 enum TicketType
 {
-	Economy,
-	Business
+	Economy = 1,
+	Business = 2
 };
 
 class Ticket
@@ -89,10 +89,6 @@ private:
 	Ticket_Container ticketBusiness;
 	Ticket_Container ticketEconomy;
 
-	std::string GenerateTicketID(const int type) const;
-	void TakeTicket(const int type);
-	bool TicketAvailable(const int type) const;
-
 	static std::vector<Flight> vector;
 
 public:
@@ -108,6 +104,9 @@ public:
 	static std::string GenerateTicketID(const int index, const int type);
 	static void TakeTicket(const int index, const int type);
 	static bool TicketAvailable(const int index, const int type);
+	std::string GenerateTicketID(const int type) const;
+	void TakeTicket(const int type);
+	bool TicketAvailable(const int type) const;
 
 	bool InputInfo();
 	void PushToVector();
@@ -128,7 +127,8 @@ public:
 
 	void PrintInfo(const int mode = InfoMode::Default, const int& count = 1) const override;
 	void PrintInfoWithTop(const int mode = InfoMode::Default) const override;
-	static void PrintInfoWhole(const int mode = InfoMode::Default);
+	static void PrintInfoVector(const int mode = InfoMode::Default);
+	static void PrintInfoVector(std::vector<Flight>& vec, const int mode);
 	static void PrintTopRow(const int mode = InfoMode::Default);
 
 	static void CopyVector(std::vector<Flight>& destination);

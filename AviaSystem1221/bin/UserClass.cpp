@@ -47,9 +47,9 @@ User::User(User&& source) noexcept
 	access = source.access;
 }
 
-BaseUser::BaseUser() : name("default") {};
+BaseUser::BaseUser() : login("default") {};
 
-BaseUser::BaseUser(std::string& login) : name(login) {}
+BaseUser::BaseUser(std::string& login) : login(login) {}
 
 
 User User::operator=(const User& source)
@@ -70,6 +70,26 @@ User User::operator = (User&& source) noexcept
 	return *this;
 }
 
+void User::Sort(const int type)
+{
+	switch (type)
+	{
+	case UserSortType::Login:
+		SortByLogin();
+		break;
+	default:
+		break;
+	}
+}
+
+void User::SortByLogin()
+{
+	std::sort(vector.begin(), vector.end(), [](const User& l, const User& r)
+		{
+			return l.login < r.login;
+		});
+}
+
 User User::InputUser(const int access)
 {
 	InputLogin(login, MIN_LOGIN, MAX_LOGIN);
@@ -81,7 +101,7 @@ User User::InputUser(const int access)
 	return *this;
 }
 
-int User::LoginUser()
+int User::LoginUser(std::string* loginPtr)
 {
 	std::string password;
 	std::string login;
@@ -94,14 +114,9 @@ int User::LoginUser()
 	{
 		if (RNG::hash(password, vector[i].salt) == vector[i].hash)
 		{
-			if (vector[i].access != AccessLevel::NoAcessLvl)
-			{
-				return vector[i].access;
-			}
-			else
-			{
-				return vector[i].access;
-			}
+			if (loginPtr != nullptr)
+				*loginPtr = login;
+			return vector[i].access;
 		}
 	}
 	return -1;
@@ -126,7 +141,7 @@ void User::CreateNewFile()
 bool User::ReadFile()
 {
 	if (GetFileStatus() == FileStatus::Opened)
-		return File::ReadFile(PATH_FILE_CLIENTS, vector);
+		return File::ReadFile(PATH_FILE_USERS, vector);
 	else return false;
 }
 
@@ -145,6 +160,11 @@ void User::PushToVector()
 	vector.emplace_back(*this);
 }
 
+size_t User::getVectorSize()
+{
+	return vector.size();
+}
+
 void User::PrintInfo(const int& count)
 {
 	std::vector<std::string> row;
@@ -160,7 +180,10 @@ void User::PrintInfo(const int& count)
 		row.emplace_back("Клиент");
 		break;
 	case AccessLevel::AdminLvl:
-		row.emplace_back("Администратор");
+		row.emplace_back("Админ");
+		break;
+	case AccessLevel::SuperAdminLvl:
+		row.emplace_back("Супер-админ");
 		break;
 	default:
 		row.emplace_back("Неизвестно");
@@ -256,17 +279,19 @@ std::fstream& operator >> (std::fstream& fs, User& user)
 Client::Client()
 {
 	tickets.reserve(TICKET_VECTOR_BUFF);
-	name = "default";
+	login = "default";
 }
 
 Client::Client(const std::string& login)
 {
-	this->name = login;
+	tickets.reserve(TICKET_VECTOR_BUFF);
+	this->login = login;
 }
 
 Client::Client(const Client& source)
 {
-	*this = source;
+	login = source.login;
+	tickets = source.tickets;
 }
 
 bool Client::BookTicket(const int index, const int type)
@@ -277,7 +302,8 @@ bool Client::BookTicket(const int index, const int type)
 		{
 			if (Flight::TicketAvailable(index, type))
 			{
-				tickets.emplace_back(std::move(Flight::GenerateTicketID(index, type)));
+				std::string fullTicketId = Flight::GenerateTicketID(index, type);
+				tickets.push_back(fullTicketId);
 				Flight::TakeTicket(index, type);
 				return true;
 			}
@@ -327,7 +353,22 @@ bool Client::PrintTickets()
 
 void Client::ShowFlights()
 {
-	Flight::PrintInfoWhole(InfoMode::UserMode);
+	Flight::PrintInfoVector(InfoMode::UserMode);
+}
+
+void Client::PushToVector()
+{
+	vector.emplace_back(*this);
+}
+
+Client Client::getClient(std::string& login)
+{
+	for (auto& it : vector)
+	{
+		if (it.login == login)
+			return it;
+	}
+	throw std::invalid_argument("Клиент не был найден в клиентской базе. Возможно, клиентская и пользовательские базы не синхронизированы");
 }
 
 void Client::CreateNewFIle()
@@ -358,14 +399,27 @@ void Client::VectorReserve(const size_t VECTOR_BUFF)
 	vector.reserve(VECTOR_BUFF);
 }
 
+Client Client::operator=(const Client& other)
+{
+	login = other.login;
+	tickets = other.tickets;
+	return *this;
+}
+
 std::fstream& operator >>(std::fstream& fs, Client& client)
 {
-	fs >> client.name;
+	fs >> client.login;
 	std::string str;
-	while (fs.peek() != '#')
+	fs >> str;
+	if (str != "#")
 	{
-		fs >> str;	
 		client.tickets.emplace_back(str);
+		while (fs.peek() != '#')
+		{
+			fs.get();
+			fs >> str;
+			client.tickets.emplace_back(str);
+		}
 	}
 	fs.get();
 	return fs;
@@ -373,13 +427,17 @@ std::fstream& operator >>(std::fstream& fs, Client& client)
 
 std::fstream& operator << (std::fstream& fs, Client& client)
 {
-	fs << client.name << '\n';
-	size_t limiter = client.tickets.size() - 1;
-	for (size_t i = 0; i < limiter; i++)
+	fs << client.login << '\n';
+	long long limiter = client.tickets.size() - 1;
+	if (limiter > -1)
 	{
-		fs << client.tickets[i] << '\n';
+		for (long long i = 0; i < limiter; i++)
+		{
+			fs << client.tickets[i] << '\n';
+		}
+		fs << client.tickets[limiter] << '\n';
 	}
-	fs << client.tickets[limiter] << '\n' << '#';
+	fs << '#';
 	return fs;
 }
 
@@ -393,11 +451,15 @@ void Admin::AcceptAll()
 	for (auto& it : User::vector)
 	{
 		if (it.access == AccessLevel::NoAcessLvl)
+		{
+			Client newClient(it.login);
+			newClient.PushToVector();
 			it.access = AccessLevel::ClientLvl;
+		}
 	}
 }
 
 void Admin::ShowFlights()
 {
-	Flight::PrintInfoWhole(InfoMode::AdminMode);
+	Flight::PrintInfoVector(InfoMode::AdminMode);
 }

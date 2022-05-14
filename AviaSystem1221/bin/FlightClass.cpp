@@ -276,15 +276,6 @@ void Flight::TakeTicket(const int type)
 		ticketEconomy.count--;
 }
 
-bool Flight::TicketAvailable(const int type) const
-{
-	if (type == TicketType::Business)
-		return ticketBusiness.count;
-	else if (type == TicketType::Economy)
-		return ticketEconomy.count;
-	else return false;
-}
-
 std::string Flight::GenerateTicketID(const int index, const int type)
 {
 	if (vector.size() < index + 1)
@@ -307,6 +298,15 @@ bool Flight::TicketAvailable(const int index, const int type)
 		throw std::invalid_argument("Попытка выхода за пределы массива");
 
 	return vector[index].TicketAvailable(type);
+}
+
+bool Flight::TicketAvailable(const int type) const
+{
+	if (type == TicketType::Economy)
+		return ticketEconomy.count;
+	else if (type == TicketType::Business)
+		return ticketBusiness.count;
+	else return false;
 }
 
 void Flight::PushToVector()
@@ -533,7 +533,7 @@ void Flight::PrintInfoWithTop(const int mode) const
 	PrintInfo(mode);
 }
 
-void Flight::PrintInfoWhole(const int mode)
+void Flight::PrintInfoVector(const int mode)
 {
 	if (vector.size() < 1) return;
 
@@ -543,6 +543,22 @@ void Flight::PrintInfoWhole(const int mode)
 		int count = 1;
 		for (auto& it : vector)
 			it.PrintInfo(mode, count++);
+	}
+	else for (auto& it : vector)
+		it.PrintInfo(mode);
+}
+
+void Flight::PrintInfoVector(std::vector<Flight>& vec, const int mode)
+{
+	if (vec.size() < 1) return;
+
+	PrintTopRow(mode);
+	if (mode == UserMode || mode == AdminMode)
+	{
+		int count = 1;
+		for (auto& it : vec)
+			it.PrintInfo(mode, count++);
+
 	}
 	else for (auto& it : vector)
 		it.PrintInfo(mode);

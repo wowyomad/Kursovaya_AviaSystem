@@ -10,7 +10,7 @@ namespace UI
 
 
 	void AdminMain();
-	void ViewAllFlights(const int mode);
+	void ViewAllFlights(const int mode, Client* client = nullptr);
 	void ViewSpecificFlights(std::vector<Flight> vec, const int mode);
 	void AdminViewAllUsers();
 	void AdminViewSpecificUsers(std::vector<Flight> vec, const int mode);
@@ -21,17 +21,18 @@ namespace UI
 	void AdminAddFlight();
 	void AdminEditFlight(const int index);
 	void AdminAcceptUsers();
+	void AdminSortUsers();
+	void AdminViewAllClients();
 
+	void SuperAdminMain();
 	void SuperAdminAddAdmin();
 
 	void SortFlights();
 
 
-	void ClientMain();
-	void ClientViewAllFlights();
-	void ClientSearchFlights();
-	void ClientViewTickets();
-	void ClientBuyTicket();
+	void ClientMain(Client& client);
+	void ClientViewFlight(Client& client, const int index);
+	void ClientBookTicket(Client& client, Flight* flight);
 
 
 }

@@ -3,6 +3,7 @@
 #include <vector>
 #include "FlightClass.h"
 #include "common.h"
+#include <algorithm>
 class Flight;
 
 enum AccessLevel
@@ -33,6 +34,7 @@ public:
 	static bool WriteToFile();
 	static void VectorReserve(const size_t size = VECTOR_BUFF);
 	void PushToVector();
+	static size_t getVectorSize();
 
 	void PrintInfo(const int& count = 1);
 	void PrintInfoWithTop();
@@ -44,8 +46,8 @@ public:
 	void setLogin(std::string login);
 
 	User InputUser(const int access);
-	static int LoginUser();
-	static bool CreateNewUser(const int access = AccessLevel::ClientLvl);
+	static int LoginUser(std::string* loginPtr = nullptr);
+	static bool CreateNewUser(const int access = AccessLevel::NoAcessLvl);
 	static bool CheckForSuperAdmin();
 	static int loginExist(std::string& login);
 	User operator = (const User& source);
@@ -55,12 +57,16 @@ public:
 	friend std::fstream& operator >> (std::fstream& fs, User& user);
 
 	friend class Admin;
+	static void Sort(const int type);
+
+private:
+	static void SortByLogin();
 };
 
 class BaseUser
 {
 protected:
-	std::string name;
+	std::string login;
 public:
 	BaseUser();
 	BaseUser(std::string& login);
@@ -71,7 +77,7 @@ public:
 class Admin : public BaseUser
 {
 public:
-	void AcceptAll();
+	static void AcceptAll();
 	void ShowFlights() override;
 };
 
@@ -96,6 +102,9 @@ public:
 
 	void ShowFlights() override;
 
+	void PushToVector();
+
+	static Client getClient(std::string& login);
 	static void CreateNewFIle();
 	static int GetFileStatus();
 	static bool ReadFile();
@@ -103,4 +112,6 @@ public:
 	static void VectorReserve(const size_t size = VECTOR_BUFF);
 	friend std::fstream& operator << (std::fstream& fs, Client& client);
 	friend std::fstream& operator>>(std::fstream& fs, Client& client);
+
+	Client operator = (const Client& other);
 };

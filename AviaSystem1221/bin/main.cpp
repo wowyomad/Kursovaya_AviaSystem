@@ -22,6 +22,22 @@ int CELL_WIDTH;
 int CELLS;
 size_t VECTOR_BUFF;
 
+class Base
+{
+	std::string name;
+public:
+	void Print()
+	{
+		std::cout << "что-то\n";
+	}
+};
+
+class Child : public Base
+{
+
+};
+
+
 int main(int argc, char** argv)
 {
 	//Установка русского языка в косноли для ввода и вывода
@@ -43,11 +59,10 @@ int main(int argc, char** argv)
 	CELLS = 11;
 	CELL_WIDTH = CL_WIDTH / CELLS;
 	VECTOR_BUFF = 0x100000;
-	Flight::ReadFile();
-	
-	_getch();
+
+	UI::Start();
 	ClearConsole();
 	std::cout << "THE END!\n";
-
+	
 	return 0;
 }
