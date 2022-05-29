@@ -1,5 +1,4 @@
-#include "Table.h"
-
+#include "PrintFormat.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -14,25 +13,26 @@ void ClFomrat::PrintCenteredLine(std::string str, const unsigned width, const ch
 		<< std::setw(offset - str.length() + half_length) << std::setfill(fill) << '\n';
 }
 
-void ClFomrat::PrintCenteredRow(const std::vector<std::string>& stringVector, 
+void ClFomrat::PrintRow(const std::vector<std::string>& stringVector,
 	const int cellWidth,
-	const int horizontal, 
-	const int vertical, 
-	const int inner, 
+	const int horizontal,
+	const int vertical,
+	const int inner,
 	const int consoleWidth)
 {
 	if (cellWidth < 3) return;
 	unsigned maxLength = [stringVector]()->unsigned
 	{
 		unsigned maxLength = 0;
-		for(const auto &it : stringVector)
+		for (const auto& it : stringVector)
 		{
 			if (it.length() > maxLength)
 				maxLength = it.length();
 		}
 		return maxLength;
 	}();
-	unsigned int offset = (consoleWidth - cellWidth * stringVector.size()) / 2;
+	int offset = (consoleWidth - cellWidth * stringVector.size()) / 2;
+	offset = offset > 0 ? offset : 0;
 	unsigned size = stringVector.size();
 	unsigned lines = maxLength % (cellWidth - 2) == 0 ? 0 : 1;
 	lines += maxLength / (cellWidth - 2);
@@ -65,7 +65,7 @@ void ClFomrat::PrintCenteredRow(const std::vector<std::string>& stringVector,
 		std::cout << innerSideBorder;
 	std::cout << std::setw(cellWidth - 1) << std::setfill(' ') << rightBorder << '\n';
 
-	unsigned* index = new unsigned[size]{ 0 };
+	unsigned* index = new unsigned[size] { 0 };
 	for (int k = 0; k < lines; k++)
 	{
 		int m = 0;

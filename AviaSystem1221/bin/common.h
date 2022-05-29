@@ -7,6 +7,10 @@ extern int CELL_WIDTH;
 extern int CELLS;
 extern size_t VECTOR_BUFF;
 
+const char INVALID_TICKET_INDEX[] = "Обращение к несуществующему билету";
+const char INVALID_FLIGHT_INDEX[] = "Обращение к несущетсвующему рейсу";
+const char INVALID_USER_ACCESS[] = "Неизвестный идентификатор доступа";
+
 namespace FlightSortType
 {
 	enum Type

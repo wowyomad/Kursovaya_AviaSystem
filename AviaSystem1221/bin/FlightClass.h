@@ -6,14 +6,6 @@
 #include "UserClass.h"
 #include "common.h"
 
-enum InfoMode
-{
-	Default,
-	UserMode,
-	AdminMode,
-	AdminMode_noCount
-};
-
 enum TicketType
 {
 	Economy = 1,
@@ -69,9 +61,9 @@ public:
 
 	tm getDateDep() const;
 
-	virtual void PrintInfo(const int mode = InfoMode::Default, const int& count = 0) const;
-	virtual void PrintInfoWithTop(const int mode = InfoMode::Default) const;
-	static void PrintTopRow(const int mode = InfoMode::Default);
+	virtual void PrintInfo(const int& count = 0) const;
+	virtual void PrintInfoWithTop() const;
+	static void PrintTopRow();
 
 	Ticket& operator =(const Ticket& other);
 	Ticket& operator = (Ticket&& other) noexcept;
@@ -79,67 +71,94 @@ public:
 
 class Flight : public Ticket
 {
-	struct Ticket_Container
+	struct TicketInfo
 	{
 		int price = 0;
 		int count = 0;
 	};
 
 private:
-	Ticket_Container ticketBusiness;
-	Ticket_Container ticketEconomy;
+	TicketInfo ticketBusiness;
+	TicketInfo ticketEconomy;
 
 	static std::vector<Flight> vector;
+	std::vector<std::string> passangers;
 
 public:
 	Flight();
 	Flight(const Flight& source);
 	Flight(Flight&& source) noexcept;
 
+	int getType() = delete;
+
+	static void RemoveFlight(const size_t index);
+
 	void setPriceBusiness(const int price);
 	void setPriceEconomy(const int price);
 	void setCountBusiness(const int count);
 	void setCountEconomy(const int count);
-	int getType() = delete;
-	static std::string GenerateTicketID(const int index, const int type);
-	static void TakeTicket(const int index, const int type);
-	static bool TicketAvailable(const int index, const int type);
-	std::string GenerateTicketID(const int type) const;
-	void TakeTicket(const int type);
-	bool TicketAvailable(const int type) const;
 
-	bool InputInfo();
+	int getTicketPrice(const int type);
+	int getTicketCount(const int type);
+	size_t getPassangerCount();
+
+	static std::string GenerateTicketID(const int index, const int type);
+	std::string GenerateTicketID(const int type) const;
+
+	void TakeTicket(const int type);
+	void AddPasanger(std::string& login, const int type);
+
+	bool TicketAvailable(const int type, const int count) const;
+
+	void InputInfo();
+
 	void PushToVector();
 	static int getVectorSize();
 	static void CreateNewFile();
 	static int GetFileStatus();
 	static bool WriteToFile();
 	static bool ReadFile();
+
 	static void VectorReserve(const size_t size = VECTOR_BUFF);
 	static Ticket GetFlightTicket(const std::string& fullTicketID);
-	static Flight* GetFlight(const int index);
+	static Flight* getFlightPtr(const int index);
 	static int GetFlightIndex(std::string& id);
-	bool ValidateInfo();
+	static int GetFlightIndex(const Flight* flightPtr);
+	static size_t getFlightCount();
+
 	friend std::fstream& operator << (std::fstream& fs, const Flight& flight);
 	friend std::fstream& operator >> (std::fstream& fs, Flight& flight);
 	Flight& operator = (const Flight& flight);
 	Flight& operator = (Flight&& flight) noexcept;
 
-	void PrintInfo(const int mode = InfoMode::Default, const int& count = 1) const override;
-	void PrintInfoWithTop(const int mode = InfoMode::Default) const override;
-	static void PrintInfoVector(const int mode = InfoMode::Default);
-	static void PrintInfoVector(std::vector<Flight>& vec, const int mode);
-	static void PrintTopRow(const int mode = InfoMode::Default);
+	void PrintInfo(const int& count = 1) const override;
+	void PrintInfoWithTop() const override;
+	static void PrintInfoVector();
+	static void PrintInfoVector(std::vector<Flight*>& flightVector);
+	static void PrintTopRow();
+
+	void PrintPassangers() const;
 
 	static void CopyVector(std::vector<Flight>& destination);
+	static void CopyVectorPtr(std::vector<Flight*>& destination);
 	static bool Sort(const int type);
 	static std::vector<Flight> Search(const int type, const std::string& input);
+
+	static void SortById(std::vector<Flight*>& flightVector);
+	static void SortByDate(std::vector<Flight*>& flightVector);
+	static void SortByDep(std::vector<Flight*>& flightVector);
+	static void SortByArr(std::vector<Flight*>& flightVector);
+
+	static void SearchById(const std::vector<Flight*>& soruce, std::vector<Flight*>& destination, const std::string& input);
+	static void SearchByDep(const std::vector<Flight*>& soruce, std::vector<Flight*>& destination, const std::string& input);
+	static void SearchByArr(const std::vector<Flight*>& soruce, std::vector<Flight*>& destination, const std::string& input);
 
 private:
 	static void SortById();
 	static void SortByDate();
 	static void SortByDep();
 	static void SortByArr();
+
 	static void SearchById(std::vector<Flight>& vec, const std::string& input);
 	static void SearchByDep(std::vector<Flight>& vec, const std::string& input);
 	static void SearchByArr(std::vector<Flight>& vec, const std::string& input);

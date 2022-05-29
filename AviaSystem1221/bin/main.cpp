@@ -2,7 +2,6 @@
 #include "UserClass.h"
 #include "UserInterface.h"
 #include "FlightClass.h"
-#include "Table.h"
 #include <conio.h>
 #include <iostream>
 #include <Windows.h>
@@ -22,47 +21,31 @@ int CELL_WIDTH;
 int CELLS;
 size_t VECTOR_BUFF;
 
-class Base
-{
-	std::string name;
-public:
-	void Print()
-	{
-		std::cout << "что-то\n";
-	}
-};
-
-class Child : public Base
-{
-
-};
-
-
 int main(int argc, char** argv)
 {
 	//Установка русского языка в косноли для ввода и вывода
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 	setlocale(LC_ALL, "Russian");
+	//создание дирректории папки "Files", если её нет
 	_mkdir("Files");
 
+	//Раскрытие консоли по размерам экрана
 	system("mode 650");
-	//Раскрытие консоли в полный экран
+	//Расшиерие консоли по рамкам экрана
 	ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
 
-	//Получение данных о размере консоли для.
+	//Получение данных о размере консоли.
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
 	CL_WIDTH = csbi.srWindow.Right - csbi.srWindow.Left;
 	CL_WIDTH_LINE = CL_WIDTH;
 	CL_WIDTH += 8;
-	CELLS = 11;
-	CELL_WIDTH = CL_WIDTH / CELLS;
+	CELLS = 12;
+	CELL_WIDTH = CL_WIDTH / CELLS + 2;
 	VECTOR_BUFF = 0x100000;
+	UI::StartSystem();
 
-	UI::Start();
-	ClearConsole();
-	std::cout << "THE END!\n";
-	
+
 	return 0;
 }

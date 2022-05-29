@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <ctime>
 #include <conio.h>
-#include "Table.h"
+#include "PrintFormat.h"
 #include "UserConsoleInput.h"
 
 static const int MIN_PRICE = 1;
@@ -12,6 +12,7 @@ static const int MAX_PRICE = INT_MAX;
 static const int MIN_SPACE = 1;
 static const int MAX_SPACE = 1000;
 static const int FLIGHT_ID_LENGTH = 8;
+static const int PASANGERS_BUFF = 8;
 
 static const char ENTER_KEY = 13;
 static const char ESC_KEY = 27;
@@ -21,25 +22,32 @@ static const char TICKET_TYPE_BUSINESS[] = "Бизнесс-класс";
 static const char TICKET_TYPE_ECONOMY[] = "Эконом-класс";
 static const char DEFAULT_STR[] = "default";
 
-static const char ticket_col0[] = "Номер билета";
-static const char ticket_col1[] = "Класс";
-static const char ticket_col2[] = "Место вылета";
-static const char ticket_col3[] = "Место прибытия";
-static const char ticket_col4[] = "Дата вылета";
-static const char ticket_col5[] = "Время вылета";
-static const char ticket_col6[] = "Время прибытия";
+static const char TICKET_ID_COL[] = "Номер билета";
+static const char TICKET_TYPE_COL[] = "Класс";
+static const char TICKET_DEPARTURE_COL[] = "Место вылета";
+static const char TICKET_ARRIVAL_COL[] = "Место прибытия";
+static const char TICKET_DT_DEPARTURE_COL[] = "Дата вылета";
+static const char TIKCET_TM_DEPARTURE_COL[] = "Время вылета";
+static const char TICKET_TM_ARRIVAL_COL[] = "Время прибытия";
 
-static const char flight_col0[] = "Порядковый номер";
-static const char flight_col1[] = "Номер рейса";
-static const char* flight_col2 = ticket_col2;
-static const char* flight_col3 = ticket_col3;
-static const char* flight_col4 = ticket_col4;
-static const char* flight_col5 = ticket_col5;
-static const char* flight_col6 = ticket_col6;
-static const char flight_col7[] = "Эконом, билеты";
-static const char flight_col8[] = "Бизнес, билеты";
-static const char flight_col9[] = "Эконом, стоимость";
-static const char flight_col10[] = "Бизнес, стоимость";
+static const char NUMBER_COl[] = "Порядковый номер";
+static const char FLIGHT_ID_COL[] = "Номер рейса";
+static const char* FLIGHT_DEPARTURE_COL = TICKET_DEPARTURE_COL;
+static const char* FLIGHT_ARRIVAL_COL = TICKET_ARRIVAL_COL;
+static const char* FLIGHT_DT_DEPARTURE_COL = TICKET_DT_DEPARTURE_COL;
+static const char* FLIGHT_TM_DEPARTURE_COL = TIKCET_TM_DEPARTURE_COL;
+static const char* FLIGHT_TM_ARRIVAL_COL = TICKET_TM_ARRIVAL_COL;
+static const char FLIGHT_ECONOMY_COUNT_COL[] = "Эконом, билеты";
+static const char FLIGHT_BUSINESS_COUNT_COL[] = "Бизнес, билеты";
+static const char FLIGHT_ECONOMY_PRICE_COL[] = "Эконом, стоимость";
+static const char FLIGHT_BUSINESS_PRICE_COL[] = "Бизнес, стоимость";
+
+
+enum InfoMode
+{
+	Count,
+	NoCount
+};
 
 std::vector<Flight> Flight::vector;
 
@@ -78,7 +86,7 @@ Ticket::Ticket(Ticket&& source) noexcept
 	loc = std::move(source.loc);
 }
 
-void Ticket::PrintInfo(const int mode, const int& count) const
+void Ticket::PrintInfo(const int& count) const
 {
 	std::vector <std::string> row;
 	row.reserve(CELLS);
@@ -104,29 +112,29 @@ void Ticket::PrintInfo(const int mode, const int& count) const
 		getTimeString(time.tmDeparture),
 		getTimeString(time.tmArrival)
 		});
-	ClFomrat::PrintCenteredRow(row, CELL_WIDTH, ClFomrat::Border::Both, ClFomrat::Border::Bottom, ClFomrat::Border::Both);
+	ClFomrat::PrintRow(row, CELL_WIDTH, ClFomrat::Border::Both, ClFomrat::Border::Bottom, ClFomrat::Border::Both);
 }
 
-void Ticket::PrintInfoWithTop(const int mode) const
+void Ticket::PrintInfoWithTop() const
 {
-	PrintTopRow(mode);
-	PrintInfo(mode);
+	PrintTopRow();
+	PrintInfo();
 }
 
-void Ticket::PrintTopRow(const int mode)
+void Ticket::PrintTopRow()
 {
 	std::vector<std::string> topRow;
 	topRow.reserve(CELLS);
 	topRow.insert(topRow.end(), {
-		ticket_col0,
-		ticket_col1,
-		ticket_col2,
-		ticket_col3,
-		ticket_col4,
-		ticket_col5,
-		ticket_col6
+		TICKET_ID_COL,
+		TICKET_TYPE_COL,
+		TICKET_DEPARTURE_COL,
+		TICKET_ARRIVAL_COL,
+		TICKET_DT_DEPARTURE_COL,
+		TIKCET_TM_DEPARTURE_COL,
+		TICKET_TM_ARRIVAL_COL
 		});
-	ClFomrat::PrintCenteredRow(topRow, CELL_WIDTH, ClFomrat::Border::NoBorder, ClFomrat::Border::Bottom, ClFomrat::Border::NoBorder);
+	ClFomrat::PrintRow(topRow, CELL_WIDTH, ClFomrat::Border::NoBorder, ClFomrat::Border::Bottom, ClFomrat::Border::NoBorder);
 
 }
 
@@ -155,6 +163,7 @@ Flight::Flight() : Ticket()
 {
 	ticketBusiness = { 0,0 };
 	ticketEconomy = { 0,0 };
+	passangers.reserve(PASANGERS_BUFF);
 }
 
 Flight::Flight(const Flight& source)
@@ -224,6 +233,12 @@ tm Ticket::getDateDep() const
 	return time.dtDeprature;
 }
 
+void Flight::RemoveFlight(const size_t index)
+{
+	if (index > vector.size()) throw std::exception("Попытка выхода за пределы массива");
+	vector.erase(vector.begin() + index);
+}
+
 void Flight::setPriceBusiness(const int price)
 {
 	ticketBusiness.price = price;
@@ -244,6 +259,34 @@ void Flight::setCountEconomy(const int count)
 	ticketEconomy.count = count;
 }
 
+int Flight::getTicketPrice(const int type)
+{
+	if (type == TicketType::Business)
+		return ticketBusiness.price;
+	else if (type == TicketType::Economy)
+		return ticketEconomy.price;
+	else throw std::exception("Несуществующий тип билета: " + type);
+}
+
+int Flight::getTicketCount(const int type)
+{
+	if (type == TicketType::Business)
+		return ticketBusiness.count;
+	else if (type == TicketType::Economy)
+		return ticketEconomy.count;
+	else throw std::exception("Несуществующий тип билета: " + type);
+}
+
+size_t Flight::getPassangerCount()
+{
+	return passangers.size();
+}
+
+size_t Flight::getFlightCount()
+{
+	return vector.size();
+}
+
 int Flight::GetFlightIndex(std::string& id)
 {
 	int i;
@@ -255,6 +298,12 @@ int Flight::GetFlightIndex(std::string& id)
 	}
 	return -1;
 
+}
+
+int Flight::GetFlightIndex(const Flight* flightPtr)
+{
+	if (flightPtr == nullptr) throw std::exception("В функцию GetFlightIndex был передан нулевой указатель");
+	return (flightPtr - vector.data());
 }
 
 std::string Flight::GenerateTicketID(const int type) const
@@ -274,6 +323,8 @@ void Flight::TakeTicket(const int type)
 		ticketBusiness.count--;
 	else if (type == TicketType::Economy)
 		ticketEconomy.count--;
+	if (ticketEconomy.count < 0 || ticketBusiness.count < 0)
+		throw std::exception(INVALID_FLIGHT_INDEX);
 }
 
 std::string Flight::GenerateTicketID(const int index, const int type)
@@ -284,29 +335,20 @@ std::string Flight::GenerateTicketID(const int index, const int type)
 	return vector[index].GenerateTicketID(type);
 }
 
-void Flight::TakeTicket(const int index, const int type)
+void Flight::AddPasanger(std::string& login, const int type)
 {
-	if (vector.size() < index + 1)
-		throw std::invalid_argument("Попытка выхода за пределы массива.");
-
-	vector[index].TakeTicket(type);
+	std::string passangerInfo = login + '_' + std::to_string(type);
+	passangers.emplace_back(passangerInfo);
 }
 
-bool Flight::TicketAvailable(const int index, const int type)
-{
-	if (vector.size() < index + 1)
-		throw std::invalid_argument("Попытка выхода за пределы массива");
 
-	return vector[index].TicketAvailable(type);
-}
-
-bool Flight::TicketAvailable(const int type) const
+bool Flight::TicketAvailable(const int type, const int count) const
 {
 	if (type == TicketType::Economy)
-		return ticketEconomy.count;
+		return ticketEconomy.count >= count ? true : false;
 	else if (type == TicketType::Business)
-		return ticketBusiness.count;
-	else return false;
+		return ticketBusiness.count >= count ? true : false;
+	else throw std::exception("Что-то пошло не так при получении типа билета");
 }
 
 void Flight::PushToVector()
@@ -329,41 +371,156 @@ void Flight::CreateNewFile()
 	file.close();
 }
 
-bool Flight::ValidateInfo()
+void Flight::SortById(std::vector<Flight*>& flightVector)
 {
-	return true;
+	auto cmp = [](const Flight* l, const Flight* r) noexcept
+	{
+		return l->id < r->id;
+	};
+
+	std::sort(flightVector.begin(), flightVector.end(), cmp);
+}
+
+void Flight::SortByDate(std::vector<Flight*>& flightVector)
+{
+	auto cmp = [](const Flight* l, const Flight* r) noexcept
+	{
+		return  l->time.dtDeprature < r->time.dtDeprature;
+	};
+
+	std::sort(flightVector.begin(), flightVector.end(), cmp);
+}
+
+void Flight::SortByDep(std::vector<Flight*>& flightVector)
+{
+	auto cmp = [](const Flight* l, const Flight* r) noexcept
+	{
+		return l->loc.departure < r->loc.departure;
+	};
+
+	std::sort(flightVector.begin(), flightVector.end(), cmp);
+}
+
+void Flight::SortByArr(std::vector<Flight*>& flightVector)
+{
+	auto cmp = [](const Flight* l, const Flight* r)
+	{
+		return l->loc.arrival < r->loc.arrival;
+	};
+
+	std::sort(flightVector.begin(), flightVector.end(), cmp);
+}
+
+void Flight::SearchById(const std::vector<Flight*>& source, std::vector<Flight*>& destination, const std::string& input)
+{
+	std::string str_lower;
+	std::string input_lower = input;
+	for (int i = 0; i < input.size(); i++)
+	{
+		input_lower[i] = std::tolower(input_lower[i]);
+	}
+	for (auto& it : source)
+	{
+		str_lower = it->id;
+		for (int i = 0; i < str_lower.size(); i++)
+		{
+			str_lower[i] = std::tolower(str_lower[i]);
+		}
+		if (str_lower.find(input_lower) != std::string::npos)
+		{
+			destination.push_back(it);
+		}
+	}
+}
+
+void Flight::SearchByDep(const std::vector<Flight*>& source, std::vector<Flight*>& destination, const std::string& input)
+{
+	std::string str_lower;
+	std::string input_lower = input;
+	for (int i = 0; i < input.size(); i++)
+	{
+		input_lower[i] = std::tolower(input_lower[i]);
+	}
+	for (auto& it : source)
+	{
+		str_lower = it->loc.departure;
+		for (int i = 0; i < str_lower.size(); i++)
+		{
+			str_lower[i] = std::tolower(str_lower[i]);
+		}
+		if (str_lower.find(input_lower) != std::string::npos)
+		{
+			destination.push_back(it);
+		}
+	}
+}
+
+void Flight::SearchByArr(const std::vector<Flight*>& source, std::vector<Flight*>& destination, const std::string& input)
+{
+	std::string str_lower;
+	std::string input_lower = input;
+	for (int i = 0; i < input.size(); i++)
+	{
+		input_lower[i] = std::tolower(input_lower[i]);
+	}
+	for (auto& it : source)
+	{
+		str_lower = it->loc.arrival;
+		for (int i = 0; i < str_lower.size(); i++)
+		{
+			str_lower[i] = std::tolower(str_lower[i]);
+		}
+		if (str_lower.find(input_lower) != std::string::npos)
+		{
+			destination.push_back(it);
+		}
+	}
 }
 
 void Flight::SortById()
 {
-	std::sort(vector.begin(), vector.end(), [](const Flight& l, const Flight& r) noexcept
-		{
-			return l.id < r.id;
-		});
+	auto cmp = [](const Flight& l, const Flight& r) noexcept
+	{
+		return l.id < r.id;
+	};
+
+	if (!std::is_sorted(vector.begin(), vector.end(), cmp))
+		std::sort(vector.begin(), vector.end(), cmp);
 }
+
 
 void Flight::SortByDate()
 {
-	std::sort(vector.begin(), vector.end(), [](const Flight& l, const Flight& r) noexcept
-		{
-			return l.time.dtDeprature < r.time.dtDeprature;
-		});
+	auto cmp = [](const Flight& l, const Flight& r) noexcept
+	{
+		return  l.time.dtDeprature < r.time.dtDeprature;
+	};
+
+	if (!std::is_sorted(vector.begin(), vector.end(), cmp))
+		std::sort(vector.begin(), vector.end(), cmp);
 }
 
 void Flight::SortByDep()
 {
-	std::sort(vector.begin(), vector.end(), [](const Flight& l, const Flight& r) noexcept
-		{
-			return l.loc.departure < r.loc.departure;
-		});
+	auto cmp = [](const Flight& l, const Flight& r) noexcept
+	{
+		return l.loc.departure < r.loc.departure;
+	};
+
+	if (!std::is_sorted(vector.begin(), vector.end(), cmp))
+		std::sort(vector.begin(), vector.end(), cmp);
+
 }
 
 void Flight::SortByArr()
 {
-	std::sort(vector.begin(), vector.end(), [](const Flight& l, const Flight& r) noexcept
-		{
-			return l.loc.arrival < r.loc.arrival;
-		});
+	auto cmp = [](const Flight& l, const Flight& r) noexcept
+	{
+		return l.loc.arrival < r.loc.arrival;
+	};
+
+	if (!std::is_sorted(vector.begin(), vector.end(), cmp))
+		std::sort(vector.begin(), vector.end(), cmp);
 }
 
 void Flight::SearchById(std::vector<Flight>& vec, const std::string& input)
@@ -482,10 +639,20 @@ void Flight::CopyVector(std::vector<Flight>& destination)
 {
 	destination = vector;
 }
+void Flight::CopyVectorPtr(std::vector<Flight*>& destination)
+{
+	destination.clear();
+	destination.reserve(vector.size());
+	for (size_t i = 0; i < vector.size(); i++)
+	{
+		destination.emplace_back(&vector[i]);
+	}
+}
 Flight& Flight::operator = (const Flight& flight)
 {
 	id = flight.id;
 	loc = flight.loc;
+	passangers = flight.passangers;
 	time = flight.time;
 	ticketBusiness = flight.ticketBusiness;
 	ticketEconomy = flight.ticketEconomy;
@@ -497,6 +664,7 @@ Flight& Flight::operator=(Flight&& flight) noexcept
 {
 	id = std::move(flight.id);
 	loc = std::move(flight.loc);
+	passangers = std::move(flight.passangers);
 	time = flight.time;
 	ticketBusiness = flight.ticketBusiness;
 	ticketEconomy = flight.ticketEconomy;
@@ -504,84 +672,91 @@ Flight& Flight::operator=(Flight&& flight) noexcept
 	return *this;
 }
 
-void Flight::PrintInfo(const int mode, const int& count) const
+void Flight::PrintInfo(const int& count) const
 {
 	std::vector <std::string> row;
 	row.reserve(CELLS);
-	if (mode == InfoMode::UserMode || mode == InfoMode::AdminMode)
-		row.emplace_back(std::to_string(count));
 	row.insert(row.end(), {
+		std::to_string(count),
 		id,
 		loc.departure,
 		loc.arrival,
 		getDateString(time.dtDeprature),
 		getTimeString(time.tmDeparture),
-		getTimeString(time.tmArrival) });
-	if (mode == InfoMode::AdminMode || mode == InfoMode::AdminMode_noCount)
-		row.insert(row.end(), {
+		getTimeString(time.tmArrival),
 		std::to_string(ticketEconomy.count),
-		std::to_string(ticketBusiness.count) });
-	row.insert(row.end(), {
+		std::to_string(ticketBusiness.count),
 		std::to_string(ticketEconomy.price),
 		std::to_string(ticketBusiness.price) });
-	ClFomrat::PrintCenteredRow(row, CELL_WIDTH, ClFomrat::Border::Both, ClFomrat::Border::Bottom, ClFomrat::Border::Both);
+	ClFomrat::PrintRow(row, CELL_WIDTH, ClFomrat::Border::Both, ClFomrat::Border::Bottom, ClFomrat::Border::Both);
 }
 
-void Flight::PrintInfoWithTop(const int mode) const
+void Flight::PrintInfoWithTop() const
 {
-	PrintTopRow(mode);
-	PrintInfo(mode);
+	PrintTopRow();
+	PrintInfo();
 }
 
-void Flight::PrintInfoVector(const int mode)
+void Flight::PrintInfoVector()
 {
 	if (vector.size() < 1) return;
 
-	PrintTopRow(mode);
-	if (mode == UserMode || mode == AdminMode)
+	PrintTopRow();
+	int count = 1;
+	for (auto& it : vector)
 	{
-		int count = 1;
-		for (auto& it : vector)
-			it.PrintInfo(mode, count++);
+		it.PrintInfo(count++);
 	}
-	else for (auto& it : vector)
-		it.PrintInfo(mode);
 }
 
-void Flight::PrintInfoVector(std::vector<Flight>& vec, const int mode)
+void Flight::PrintInfoVector(std::vector<Flight*>& flightVEector)
 {
-	if (vec.size() < 1) return;
+	if (flightVEector.empty()) return;
 
-	PrintTopRow(mode);
-	if (mode == UserMode || mode == AdminMode)
+	PrintTopRow();
+	int count = 1;
+	for (auto& it : flightVEector)
 	{
-		int count = 1;
-		for (auto& it : vec)
-			it.PrintInfo(mode, count++);
-
+		it->PrintInfo(count++);
 	}
-	else for (auto& it : vector)
-		it.PrintInfo(mode);
 }
 
-void Flight::PrintTopRow(const int mode)
+void Flight::PrintTopRow()
 {
 	std::vector<std::string> row;
 	row.reserve(CELLS);
-	if (mode == UserMode || mode == AdminMode)
-		row.emplace_back(flight_col0);
 	row.insert(row.end(), {
-		flight_col1,
-		flight_col2,
-		flight_col3,
-		flight_col4,
-		flight_col5,
-		flight_col6 });
-	if (mode == AdminMode || mode == AdminMode_noCount)
-		row.insert(row.end(), { flight_col7, flight_col8 });
-	row.insert(row.end(), { flight_col9, flight_col10 });
-	ClFomrat::PrintCenteredRow(row, CELL_WIDTH, ClFomrat::Border::NoBorder, ClFomrat::Border::Bottom, ClFomrat::Border::NoBorder);
+		NUMBER_COl,
+		FLIGHT_ID_COL,
+		FLIGHT_DEPARTURE_COL,
+		FLIGHT_ARRIVAL_COL,
+		FLIGHT_DT_DEPARTURE_COL,
+		FLIGHT_TM_DEPARTURE_COL,
+		FLIGHT_TM_ARRIVAL_COL,
+		FLIGHT_ECONOMY_COUNT_COL,
+		FLIGHT_BUSINESS_COUNT_COL,
+		FLIGHT_ECONOMY_PRICE_COL,
+		FLIGHT_BUSINESS_PRICE_COL });
+	ClFomrat::PrintRow(row, CELL_WIDTH, ClFomrat::Border::NoBorder, ClFomrat::Border::Bottom, ClFomrat::Border::NoBorder);
 }
+
+void Flight::PrintPassangers() const
+{
+	if (passangers.size() < 1) return;
+
+	std::string login;
+	std::string type;
+	for (auto& it : passangers)
+	{
+		std::vector<std::string> row; //Строка таблицы
+		row.insert(row.begin(), {
+			it.substr(0, it.length() - 2),	//Имя пользователя
+			it.back() - '0' == TicketType::Economy ? "Эконом-класс" : "Бизнес-класс" //Класс билета
+			});
+		ClFomrat::PrintRow(row, CELL_WIDTH, ClFomrat::Border::Both, ClFomrat::Border::Both, ClFomrat::Border::Both);
+	}
+}
+
 
 int Flight::GetFileStatus()
 {
@@ -592,7 +767,7 @@ bool Flight::ReadFile()
 {
 	if (vector.size() > 0)
 		vector.erase(vector.begin(), vector.end());
-	VectorReserve();
+	vector.reserve(VECTOR_BUFF);
 	if (GetFileStatus() == FileStatus::Opened)
 		return File::ReadFile(PATH_FILE_FLIGHTS, vector);
 	else return false;
@@ -616,7 +791,7 @@ Ticket Flight::GetFlightTicket(const std::string& fullTicketId)
 	return Ticket(-1);
 }
 
-Flight* Flight::GetFlight(const int index)
+Flight* Flight::getFlightPtr(const int index)
 {
 	return &vector[index];
 }
@@ -633,7 +808,7 @@ bool Flight::WriteToFile()
 		return File::WriteToFile(PATH_FILE_FLIGHTS, vector);
 }
 
-bool Flight::InputInfo()
+void Flight::InputInfo()
 {
 	const char actionMsg[] = "Нажмите Enter, чтобы подтвердить или Esc чтобы вернуться назад";
 	const char idMsg[] = "Номер рейса будет задан после добавления в список";
@@ -655,7 +830,7 @@ bool Flight::InputInfo()
 	InputVar(space, MIN_SPACE, MAX_SPACE, "Вместимость самолета: ");
 	InputVar(ticketEconomy.count, 0, space, "Количество билетов эконом-класса: ");
 	if (ticketEconomy.count != 0)
-		InputVar(ticketBusiness.price, MIN_PRICE, MAX_PRICE, "Цена билета эконом-класса: ");
+		InputVar(ticketEconomy.price, MIN_PRICE, MAX_PRICE, "Цена билета эконом-класса: ");
 	if (ticketEconomy.count != space)
 	{
 		InputVar(ticketBusiness.count, 0, space - ticketEconomy.count, "Количество билетов бизнесс-класса: ");
@@ -665,27 +840,6 @@ bool Flight::InputInfo()
 	else std::cout << "Места для посажиров бизнес-класса не осталось\n";
 
 
-
-	PrintTopRow(InfoMode::AdminMode_noCount);
-	this->PrintInfo(InfoMode::AdminMode_noCount);
-	std::cout << '\n';
-	ClFomrat::PrintCenteredLine(idMsg, CL_WIDTH_LINE, '-');
-	ClFomrat::PrintCenteredNewLine(actionMsg, CL_WIDTH_LINE, '-');
-
-	do answer = _getch();
-	while (answer != ENTER_KEY && answer != ESC_KEY);
-	switch (answer)
-	{
-	case ENTER_KEY:
-		saveInput = true;
-		break;
-	case ESC_KEY:
-		saveInput = false;
-		break;
-	}
-
-	std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-	return saveInput;
 }
 
 
@@ -710,7 +864,20 @@ std::fstream& operator<<(std::fstream& fs, const Flight& flight)
 	fs << flight.ticketBusiness.price << ' ';
 	fs << flight.ticketEconomy.price << ' ';
 	fs << flight.ticketBusiness.count << ' ';
-	fs << flight.ticketEconomy.count;
+	fs << flight.ticketEconomy.count << '\n';
+
+	long long limiter = flight.passangers.size() - 1;
+	if (limiter > 0)
+	{
+		for (long long i = 0; i < limiter; i++)
+		{
+			fs << flight.passangers[i] << '\n';
+		}
+	}
+	if (limiter > -1)
+		fs << flight.passangers[limiter] << '\n';
+	fs << '#';
+
 	return fs;
 }
 
@@ -736,6 +903,20 @@ std::fstream& operator>>(std::fstream& fs, Flight& flight)
 	fs >> flight.ticketEconomy.price;
 	fs >> flight.ticketBusiness.count;
 	fs >> flight.ticketEconomy.count;
+
+	int i = 0;
+
+	std::string str;
+	fs >> str;
+	while (str != "#")
+	{
+		if (flight.passangers.capacity() < i)
+			flight.passangers.reserve(flight.passangers.capacity() + PASANGERS_BUFF);
+		flight.passangers.emplace_back(str);
+		fs >> str;
+		i++;
+	}
+
 	return fs;
 }
 

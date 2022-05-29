@@ -4,6 +4,8 @@
 
 //Ввод из консоли в строку. Все символы в консоли заменяются '*'. Ввод ограничен символами(кроме пробела) и английскими буквами.
 void InputPassword(std::string& password, const int min, const int max);
+//Не работает. 
+void InputPasswordTwice(std::string& password, const int min, const int max);
 //Ввод из консоли в строку. Ввод ограничен английскими символами, цифрами и символом '_'(нижний слэш). 
 void InputLogin(std::string& login, const int min, const int max);
 //Ввод из консоли в строку. Если msg не нуль, то в консоли будет выводится msg

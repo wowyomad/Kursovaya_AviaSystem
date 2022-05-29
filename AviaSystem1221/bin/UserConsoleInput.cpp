@@ -12,8 +12,7 @@ const char ENTER_KEY = 13;
 
 void InputPassword(std::string& password, const int min, const int max)
 {
-	std::cout << "Пароль может содеражть любые символы, за исключением кириллицы.\n"
-		<< "Пароль: ";
+	std::cout << "Пароль: ";
 	password.clear();
 	unsigned char ch = 0;
 	do
@@ -59,6 +58,11 @@ void InputPassword(std::string& password, const int min, const int max)
 			password.push_back(ch);
 		}
 	} while (true);
+}
+
+void InputPasswordTwice(std::string& password, const int min, const int max)
+{
+
 }
 
 void InputLogin(std::string& login, const int min, const int max)
@@ -120,8 +124,10 @@ void InputLogin(std::string& login, const int min, const int max)
 
 void InputString(std::string& string, const char* msg)
 {
+	string = "";
 	if (msg) std::cout << msg;
-	std::getline(std::cin, string);
+	while(string.empty())
+		std::getline(std::cin, string);
 }
 
 void InputDate(tm& date, const char* msg)
@@ -137,7 +143,7 @@ void InputDate(tm& date, const char* msg)
 	InputVar(date.tm_year, currentTime.tm_year + 1900, currentTime.tm_year + 1900 + 10, "Год: ");
 	date.tm_year -= 1900;
 	if (date.tm_year == currentTime.tm_year)
-		minMonth = currentTime.tm_mon;
+		minMonth = currentTime.tm_mon + 1;
 
 	InputVar(date.tm_mon, minMonth, 12, "Месяц: ");
 	if (date.tm_year == currentTime.tm_year)
@@ -170,7 +176,6 @@ void InputDate(tm& date, const char* msg)
 	}
 
 	InputVar(date.tm_mday, minDay, maxDay, "Число: ");
-
 }
 
 void InputTime(tm& time, const char* msg)
@@ -193,28 +198,6 @@ std::string getTimeString(const tm& time)
 	os << std::put_time(&time, "%H:%M");
 	return os.str();
 }
-
-bool AcceptAction(const char* msg)
-{
-	while (true)
-	{
-		std::cout << "Подтвердите действие: " << msg << "\n\n";
-		std::cout << "1.Подтвердить\n"
-			<< "0.Отмена\n";
-		char ch = _getch();
-		switch (ch)
-		{
-		case '1':
-			return true;
-		case '2':
-			return false;
-		default:
-			std::cout << "Неверный ввод\n\n";
-			break;
-		}
-	}
-}
-
 
 bool is_russian(const char ch)
 {

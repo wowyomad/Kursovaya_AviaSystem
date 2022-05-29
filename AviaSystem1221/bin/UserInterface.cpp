@@ -1,7 +1,7 @@
 #include "UserInterface.h"
 #include "FlightClass.h"
 #include "UserConsoleInput.h"
-#include "Table.h"
+#include "PrintFormat.h"
 #include <iomanip>
 #include <iostream>
 #include <conio.h>
@@ -13,46 +13,44 @@ extern const char PATH_FILE_FLIGHTS[];
 static const char ENTER_KEY = 13;
 static const char ESC_KEY = 27;
 
-const char noFileMsg[] = "Не сущетсвует файла по пути: ";
-const char newAdminMsg[] = "Введенные вами данные будут использоваться для входа как администратор";
-const char unknownErrFileMsg[] = "Непредвиденная ошибка при открытии пользовательской базы";
-const char registrationFailMsg[] = "Пользователь с таким логином уже существует.";
+const char escBackMsg[] = "ESC.Назад";
+const char escExitMsg[] = "ESC.Выйти";
 const char pressKeyMsg[] = "Нажмите любую кнопку чтобы продолжить.";
 
-const char fillCh = '-';
+const char fillCh = ':';
 
-void UI::Start()
+void UI::StartSystem()
 {
-	const char helloMsg1[] = "Добро пожаловуть в информационную систему по билетикам";
-	const char helloMsg2[] = "AviaSystem1221";
-	const char noUserFileMsg[] = "Файл с пользовательскими данными не обнаружен";
-	const char noFlightFileMsg[] = "Файл с данными об авиарейсах не обнаружен";
-	const char noClientFileMsg[] = "Файл с клиентской базой не обнаружен";
-	const char emptyUserFIleMsg[] = "Файл с пользовательскими данными пустой.";
-	const char emptyFlightFIleMsg[] = "Файл с данными об авиарейсах пустой.";
-	const char emptyClientFileMsg[] = "Файл с клиентской базой пустой.";
-	const char newFileMsg[] = "Будет создан новый файл.";
-	const char noAdminMsg[] = "Пользователь с правами Супер-Админа найден не был.";
-	const char adminReqMsg[] = "Рекомендуется войти как Админ.";
-	const char goodFileMsg[] = "Все файлы были успешно инициализированы.";
-
-
-	ClFomrat::PrintCenteredLine(helloMsg1, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(helloMsg2, CL_WIDTH_LINE, fillCh);
+	PrintMessage3l("Добро пожаловать в программу для продажи авиабилетов");
+	PrintMessage3l("Программа создана исключительно для демонстрационных целей");
+	PrintMessage3l("Программа не предназначена для коммерческого использования");
+	PrintMessage3l("Все права принадлежат Сундукову Вадиму");
+	PrintMessage3l("Если вас что-то не устраивает, увидимся в суде");
 
 	int status = User::GetFileStatus();
 	if (status == FileStatus::NotOpened)
 	{
-		ClFomrat::PrintCenteredLine(noUserFileMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(newFileMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(newAdminMsg, CL_WIDTH_LINE, fillCh);
-		User::CreateNewUser(AccessLevel::SuperAdminLvl);
+		PrintCharLine();
+		PrintMessage("Файл с пользовательскими данными не был обнаружен");
+		PrintMessage("Будет создан новый файл с пользовательскими данными");
+		PrintMessage("Введенные вами данные будут использоваться для входа как супер-администратор");
+		PrintCharLine();
+		std::cout << '\n';
+		while (!User::CreateNewUser(AccessLevel::SuperAdmin))
+		{
+			PrintMessage3l("Пользователь с таким логином уже существует");
+		}
 	}
 	else if (status == FileStatus::Empty)
 	{
-		ClFomrat::PrintCenteredLine(emptyUserFIleMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(newAdminMsg, CL_WIDTH_LINE, fillCh);
-		User::CreateNewUser(AccessLevel::SuperAdminLvl);
+		PrintMessage3l("Файл с пользовательскими данными пустой");
+		PrintMessage3l("Введенные вами данные будут использоваться для входа как супер-администратор");
+		std::cout << '\n';
+		while (!User::CreateNewUser(AccessLevel::SuperAdmin))
+		{
+			PrintMessageNL("Пользователь с таким логином уже существует");
+		}
+		PrintMessage("Пользователь был успешно добавлен");
 	}
 	else
 	{
@@ -60,48 +58,47 @@ void UI::Start()
 		bool superAdminExist = User::CheckForSuperAdmin;
 		if (!superAdminExist)
 		{
-			ClFomrat::PrintCenteredLine(noAdminMsg, CL_WIDTH_LINE, fillCh);
-			ClFomrat::PrintCenteredLine(newAdminMsg, CL_WIDTH_LINE, fillCh);
-			User::CreateNewUser(AccessLevel::SuperAdminLvl);
+			PrintMessage3l("Пользователя с правами супер-администратора найдено не было");
+			PrintMessage3l("Введенные вами данные будут использоваться для входа как супер-администратор");
+			std::cout << '\n';
+			if (User::CreateNewUser(AccessLevel::SuperAdmin))
+				PrintMessage("Пользователь был успешно добавлен");
 		}
 	}
-
-	status = Client::GetFileStatus();
-	if (status == FileStatus::NotOpened)
-		Client::CreateNewFIle();
-	else if (status == FileStatus::Opened)
-		Client::ReadFile();
 
 	status = Flight::GetFileStatus();
 	if (status == FileStatus::NotOpened)
 		Flight::CreateNewFile();
-	else if (status == FileStatus::Opened)
+	else if (status != FileStatus::Empty)
 		Flight::ReadFile();
 
-	ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
+	PrintMessage(pressKeyMsg);
 	_getch();
 
-	Main();
+	Menu_Main();
 }
 
-void UI::Main()
+void UI::Menu_Main()
 {
-	ClearConsole();
-
 	const char mainMsg[] = "Главное меню";
 	const char option1Msg[] = "1.Регистрация";
 	const char option2Msg[] = "2.Логин";
 	const char option3Msg[] = "Esc.Выйти";
 
-
-	bool success = false;
+	bool done = false;
 	char ch;
-	while (!success)
+	while (!done)
 	{
-		ClFomrat::PrintCenteredLine(mainMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
+		ClearConsole();
+
+		PrintMessage3l("Главное меню");
+
+		PrintCharLine();
+		PrintMessage("1.Регистрация");
+		PrintMessage("2.Логин");
+		PrintMessage(escExitMsg);
+		PrintCharLine();
+
 
 		do ch = _getch();
 		while ((ch < '1' || ch > '2') && ch != ESC_KEY);
@@ -114,793 +111,1131 @@ void UI::Main()
 			Login();
 			break;
 		case ESC_KEY:
+		{
 			Flight::WriteToFile();
-			Client::WriteToFile();
 			User::WriteToFile();
-			success = true;
+			done = true;
 			break;
 		}
-
+		}
 	}
 }
 
-void UI::Register(const int accessLevel)
+bool UI::Register(const AccessLevel access)
 {
-	ClearConsole();
-
-	const char rigestserMsg[] = "Регистрация";
-	const char successMsg[] = "Пользователь успешно зарегистрирован.";
-	const char userExistMsg[] = "Пользователь с таким логином уже зарегистрирован.";
-	const char waitMsg[] = "Ожидайте подтверждения от администратора.";
-
-	ClFomrat::PrintCenteredLine(rigestserMsg, CL_WIDTH_LINE, fillCh);
-	std::cout << '\n';
-
-	if (User::CreateNewUser())
+	bool done = false;
+	bool registred = false;
+	do
 	{
+		ClearConsole();
+		PrintMessage3l("Регистрация");
 
-		ClFomrat::PrintCenteredLine(successMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredNewLine(waitMsg, CL_WIDTH_LINE, fillCh);
-	}
-	else
-	{
-		ClFomrat::PrintCenteredNewLine(userExistMsg, CL_WIDTH_LINE, fillCh);
-	}
-	ClFomrat::PrintCenteredNewLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-	_getch();
-	Main();
+		User newUser;
+		newUser.InputInfo(access);
+		std::string login = newUser.getLogin();
+		if (User::loginExist(login) < 0)
+		{
+			PrintMessage3l("Логин доступен для регистрации");
+			PrintMessage3l("Подтвердите регитрацию");
+			if (AcceptAction())
+			{
+				registred = true;
+				newUser.PushToVector();
+				PrintMessage3l("Пользователь успешно зарегистрирован");
+				if (access < AccessLevel::Admin)
+					PrintMessage3l("Ожидайте подтверждения от администратора");
+				done = true;
+			}
+			else
+			{
+				PrintMessage3l("Вы отменили регистрацию");
+				PrintMessage3l("Хотите повторить попытку?");
+				if (!AcceptAction()) done = true;
+			}
+		}
+		else
+		{
+			PrintMessage3l("Данный логин уже зарегистрирован");
+			PrintMessage3l("Хотите повторить попытку?");
+			if (!AcceptAction()) done = true;
+		}
+	} while (!done);
+	PressEnterAction();
+	return registred;
 }
 
 void UI::Login()
 {
-	ClearConsole();
-	const char loginMsg[] = "Вход";
-	const char noUserMsg[] = "Пользователь не найден.";
-	const char retryMsg[] = "Хотите повторить попытку?";
-	const char successMsg[] = "Вы успешно вошли в аккаунт.";
-	const char unavailableMsg[] = "Ваш аккаунт еще не подтвержден";
-	const char superAdminMsg[] = "Вы будете перенапрелвены в меню супер-админа";
-	const char adminMsg[] = "Вы будете перенаправлены в меню админа.";
-	const char clientMsg[] = "Вы будете перенаправлены в меню клиента";
-	int accessLevel;
+	enum AccessLevel access;
+	bool done = false;
+	User* this_user = nullptr;
 	std::string login;
-	ClFomrat::PrintCenteredLine(loginMsg, CL_WIDTH_LINE, fillCh);
 	do
 	{
-		accessLevel = User::LoginUser(&login);
-		if (accessLevel > 0)
-		{
-			break;
-		}
-		else
-		{
-			ClFomrat::PrintCenteredLine(noUserMsg, CL_WIDTH_LINE, fillCh);
-			ClFomrat::PrintCenteredLine(retryMsg, CL_WIDTH_LINE, fillCh);
-			ClFomrat::PrintCenteredLine("1.Да", CL_WIDTH_LINE, fillCh);
-			ClFomrat::PrintCenteredNewLine("2.Нет", CL_WIDTH_LINE, fillCh);
+		ClearConsole();
+		PrintMessage3l("Логин");
 
-			bool correctInput = false;
-			while (!correctInput)
-			{
-				char ch = _getch();
-				switch (ch)
-				{
-				case '1':
-					correctInput = true;
-					break;
-				case '2':
-					correctInput = true;
-					UI::Main();
-				default:
-					break;
-				}
-			}
-		}
-	} while (true);
-
-	ClFomrat::PrintCenteredLine(successMsg, CL_WIDTH_LINE, fillCh);
-	if (accessLevel == AccessLevel::SuperAdminLvl)
-	{
-		ClFomrat::PrintCenteredLine(superAdminMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-		_getch();
-		UI::SuperAdminMain();
-		//Ui::SuperAdminMain();
-	}
-	else if (accessLevel == AccessLevel::AdminLvl)
-	{
-		ClFomrat::PrintCenteredLine(adminMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-		_getch();
-		UI::AdminMain();
-	}
-	{
-
-		ClFomrat::PrintCenteredLine(clientMsg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-		_getch();
-		std::unique_ptr<Client> client(new Client);
 		try
 		{
-			*client = Client::getClient(login);
-		}
-		catch (std::invalid_argument exc)
-		{
-			std::cout << exc.what();
+			this_user = User::LoginUser(&login);
 
-		}
-		UI::ClientMain(*client);
-	}
-}
-
-void UI::AdminMain()
-{
-	ClearConsole();
-	const char mainMsg[] = "Меню администратора";
-	const char option1Msg[] = "1.Просмотре рейсов";
-	const char option2Msg[] = "2.Просмотре пользователей";
-	const char option3Msg[] = "3.Просмотр клиентов";
-	const char option4Msg[] = "4.Подтвердить пользователей";
-	const char option0Msg[] = "Esc.Назад";
-
-	ClFomrat::PrintCenteredNewLine(mainMsg, CL_WIDTH_LINE, fillCh);
-
-	bool done = false;
-	while (!done)
-	{
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option4Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-		char input;
-		do
-		{
-			input = _getch();
-		} while (input < 1 && input > 4 && input != ESC_KEY);
-
-		switch (input)
-		{
-		case '1':
-			ViewAllFlights(InfoMode::AdminMode);
-			break;
-		case '2':
-			AdminViewAllUsers();
-			break;
-		case '3':
-			AdminViewAllClients();
-			break;
-		case '4':
-			AdminAcceptUsers();
-			break;
-		case ESC_KEY:
-			done = true;
-			break;
-		}
-		ClearConsole();
-	}
-
-	Main();
-}
-
-
-void UI::ViewAllFlights(const int mode, Client* client)
-{
-	const char option1Msg[] = "1.Выбрать";
-	const char option2Msg[] = "2.Отсортировать";
-	const char option3Msg[] = "3.Поиск";
-	const char option4Msg[] = "4.Добавить рейса";
-	const char option0Msg[] = "Esc.Назад";
-	bool done = false;
-	char input;
-	const char MIN = '1';
-	const char MAX = mode != InfoMode::UserMode ? '4' : '3';
-	while (!done)
-	{
-		Flight::PrintInfoVector(mode);
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-		if (mode != InfoMode::UserMode)
-			ClFomrat::PrintCenteredLine(option4Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-		do
-		{
-			input = _getch();
-		} while ((input < MIN || input > MAX) && input != ESC_KEY);
-		switch (input)
-		{
-		case '1':
-			int num;
-			InputVar(num, 1, Flight::getVectorSize(), "Номер: ");
-			if (mode == InfoMode::UserMode)
-				ClientViewFlight(*client, num - 1);
-			else
-				AdminViewFlight(num - 1);
-			break;
-		case '2':
-			std::cout << '\n';
-			SortFlights();
-			break;
-			if (true)
-		case '3':
-			std::cout << '\n';
-			SearchFligths(mode);
-		case '4':
-		{
-			Flight flight;
-			flight.InputInfo();
-			flight.PushToVector();
-			break;
-		}
-		case ESC_KEY:
-			done = true;
-			break;
-		}
-	}
-}
-
-void UI::AdminViewAllUsers()
-{
-	const char option1Msg[] = "1.Выбрать";
-	const char option2Msg[] = "2.Отсортировать";
-	const char option3Msg[] = "3.Поиск";
-	const char option0Msg[] = "Esc.Назад";
-
-	bool done = false;
-	char input;
-	while (!done)
-	{
-		User::PrintInfoWhole();
-
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-
-		do
-		{
-			input = _getch();
-		} while ((input < '1' || input > '2') && input != ESC_KEY);
-		switch (input)
-		{
-		case '1':
-			int num;
-			InputVar(num, 1, User::getVectorSize(), "Номер: ");
-			AdminViewUser(num - 1);
-			break;
-		case '2':
-			std::cout << '\n';
-			AdminSortUsers();
-			break;
-		case ESC_KEY:
-			done = true;
-			break;
-		}
-	}
-}
-
-void UI::AdminViewSpecificUsers(std::vector<Flight> vec, const int mode)
-{
-
-}
-
-void UI::AdminViewUser(const int index)
-{
-}
-
-void UI::ClientMain(Client& client)
-{
-	const char mainMsg[] = "Меню клиента";
-	const char option1Msg[] = "1.Список рейсов";
-	const char option2Msg[] = "2.Посмотреть купленные билеты";
-	const char option0Msg[] = "Esc.Назад";
-
-	ClFomrat::PrintCenteredNewLine(mainMsg, CL_WIDTH_LINE, fillCh);
-
-	bool done = false;
-	while (!done)
-	{
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-		char input;
-		do
-		{
-			input = _getch();
-		} while (input < 1 && input > 4 && input != ESC_KEY);
-
-		switch (input)
-		{
-		case '1':
-			ViewAllFlights(InfoMode::UserMode, &client);
-			break;
-		case '2':
-			client.PrintTickets();
-			ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-			_getch();
-			break;
-		case ESC_KEY:
-			done = true;
-			break;
-		}
-		ClearConsole();
-	}
-
-	Main();
-
-}
-
-void UI::ClientViewFlight(Client& client, const int index)
-{
-	ClearConsole();
-
-	const char option1Msg[] = "1.Забронировать билет";
-	const char option0Msg[] = "Esc.Назад";
-
-	bool correctInput = false;
-	char input;
-	Flight* flight = Flight::GetFlight(index);
-	flight->PrintInfoWithTop(InfoMode::UserMode);
-	while (!correctInput)
-	{
-		correctInput = true;
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-		input = _getch();
-		switch (input)
-		{
-		case '1':
-			ClientBookTicket(client, flight);
-			break;
-		case ESC_KEY:
-			break;
-		default:
-			correctInput = false;
-			break;
-		}
-	}
-}
-
-void UI::ClientBookTicket(Client& client, Flight* flight)
-{
-	const char acceptMsg[] = "Подтвердите бронирование";
-	const char option1Msg[] = "1.Подтвердить";
-	const char type1Msg[] = "1.Эконом-класс";
-	const char type2Msg[] = "2.Бизнес-класс";
-	const char noType1Msg[] = "Билетов эконом-класса нет";
-	const char noType2Msg[] = "Билетов бизнес-класса нет";
-	const char successMsg[] = "Вы успешно забронировали билет";
-	const char option0Msg[] = "Esc.Назад";
-	bool done;
-	bool ticketBooked = true;
-	std::string id = flight->getId();
-	const int index = Flight::GetFlightIndex(id);
-	char input;
-	do
-	{
-
-		ClFomrat::PrintCenteredLine(type1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(type2Msg, CL_WIDTH_LINE, fillCh);
-
-		done = true;
-		do input = _getch();
-		while (input != '1' && input != '2' && input != ESC_KEY);
-
-		if (input == '1')
-			if (flight->TicketAvailable(TicketType::Economy))
+			if (this_user->getAccessLevel() > AccessLevel::NoAccess)
 			{
-				ClFomrat::PrintCenteredNewLine(acceptMsg, CL_WIDTH_LINE, fillCh);
-				ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-				ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-				do input = _getch();
-				while ((input != '1' && input != ESC_KEY));
-				if (input == '1')
-					client.BookTicket(index, TicketType::Economy);
-				else
-				{
-					done = false;
-					break;
-				}
+				done = true;
 			}
 			else
 			{
-				ClFomrat::PrintCenteredNewLine(noType1Msg, CL_WIDTH, fillCh);
+				if (this_user->getAccessLevel() == AccessLevel::NoAccess)
+					PrintMessage3l("Пользователь ещё не подтвержден");
+				else PrintMessage3l("Неверный логин или пароль");
 			}
-		else if (input == '2')
-			if (flight->TicketAvailable(TicketType::Business))
-			{
-				ClFomrat::PrintCenteredLine(acceptMsg, CL_WIDTH_LINE, fillCh);
-				ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-				ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-				do input = _getch();
-				while ((input != '1' && input != ESC_KEY));
-				if (input == '1')
-					client.BookTicket(index, TicketType::Business);
-				else
-				{
-					done = false;
-					break;
-				}
-			}
-			else
-			{
-				ClFomrat::PrintCenteredNewLine(noType2Msg, CL_WIDTH, fillCh);
-			}
-		else
+		}
+		catch (std::exception& exc)
 		{
-			ticketBooked = false;
-			done = true;
+			PrintMessage3l("Пользователь не найден");
+		}
+		if (!done)
+		{
+			PrintMessage3l("Хотите повторить попытку?");
+			if (!AcceptAction()) done = true;
 		}
 
 	} while (!done);
+	if (this_user != nullptr)
+		if (this_user->getAccessLevel() > AccessLevel::NoAccess)
+		{
+			PrintMessage3l("Вы успешно вошли в аккаунт");
 
-	if (ticketBooked)
-	{
-		ClFomrat::PrintCenteredLine(successMsg, CL_WIDTH_LINE, fillCh);
-	}
-	ClFomrat::PrintCenteredLine(pressKeyMsg, CL_WIDTH_LINE, fillCh);
-	_getch();
+
+			void (*Main)(User*);
+			switch (this_user->getAccessLevel())
+			{
+			case AccessLevel::SuperAdmin:
+				PrintMessage3l("Вы будете перенаправлены в меню супер-пользователя");
+				Main = Main_SuperAdmin;
+				break;
+			case AccessLevel::Admin:
+				PrintMessage3l("Вы будете перенаправлены в меню администратора");
+				Main = Main_Admin;
+				break;
+			case AccessLevel::Client:
+				PrintMessage3l("Вы будете перенаправлены в меню клиента");
+				Main = Main_Client;
+				break;
+			default: throw std::exception(INVALID_USER_ACCESS);
+			}
+			PrintMessage(pressKeyMsg);
+			_getch();
+
+			Main(this_user);
+		}
 }
 
-void UI::AdminViewFlight(const int index)
+void UI::Main_SuperAdmin(User* this_user)
 {
-	const char option1Msg[] = "1. Изменить данные";
-	const char option2Msg[] = "Esc. Назад";
-	bool correctInput = false;
-	char input;
-	const Flight* flight = Flight::GetFlight(index);
-	flight->PrintInfoWithTop(InfoMode::AdminMode_noCount);
-	while (!correctInput)
-	{
-		correctInput = true;
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		input = _getch();
-		switch (input)
-		{
-		case '1':
-			std::cout << '\n';
-			AdminEditFlight(index);
-			break;
-		case ESC_KEY:
-			std::cout << '\n';
-			break;
-		default:
-			correctInput = false;
-			break;
-		}
-	}
-}
+	std::vector<Flight*> flightVector;
+	Flight::CopyVectorPtr(flightVector);
 
-void UI::SearchFligths(const int mode)
-{
+	std::vector<User*> userVector;
+	User::CopyVectorPtr(userVector);
 
-	std::vector<Flight> foundFlights;
-	const char option1Msg[] = "1.Поиск по номеру рейса";
-	const char option2Msg[] = "2.Поиск по месту вылета";
-	const char option3Msg[] = "3.Поиск по месту прибытия";
-	const char option4Msg[] = "Esc.Назад";
-	const char noFoundMsg[] = "По вашему запроссу ничего не найдено";
 
-	ClFomrat::PrintCenteredLine("Поиск", CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option4Msg, CL_WIDTH_LINE, fillCh);
-
-	bool correctInput = true;
-	char input;
-	do
-	{
-		correctInput = true;
-		input = _getch();
-		switch (input)
-		{
-		case '1':
-		{
-			int num;
-			InputVar(num, 0, Flight::getVectorSize(), "Номер рейса: ");
-			foundFlights = Flight::Search(FlightSearchType::Id, std::to_string(num));
-			break;
-		}
-		case '2':
-		{
-			std::string location;
-			InputString(location, "Место вылета: ");
-			foundFlights = Flight::Search(FlightSearchType::LocDeparture, location);
-			break;
-		}
-		case '3':
-		{
-			std::string location;
-			InputString(location, "Место прибытия: ");
-			foundFlights = Flight::Search(FlightSearchType::LocArrival, location);
-			break;
-		}
-		case ESC_KEY:
-		{
-			break;
-		}
-	defalut:
-		correctInput = false;
-		break;
-		}
-
-	} while (!correctInput);
-
-	if (input != ESC_KEY)
-	{
-		if (foundFlights.size() < 1)
-			ClFomrat::PrintCenteredNewLine(noFoundMsg, CL_WIDTH_LINE, fillCh);
-		else
-			ViewSpecificFlights(foundFlights, mode);
-	}
-
-}
-
-void UI::AdminSearchUsers()
-{
-
-}
-
-void UI::ViewSpecificFlights(std::vector<Flight> vec, const int mode)
-{
-	const char option1Msg[] = "1.Выбрать";
-	const char option2Msg[] = "Esc.Назад";
-	bool done = false;
-	char input;
-
-	Flight::PrintInfoVector(vec, mode);
-	std::cout << '\n';
-	ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-
-	do
-	{
-		input = _getch();
-	} while (input != '1' && input != ESC_KEY);
-	switch (input)
-	{
-	case '1':
-	{
-		int num;
-		InputVar(num, 1, vec.size(), "Номер: ");
-		std::string id = vec[num - 1].getId();
-		num = Flight::GetFlightIndex(id);
-		AdminViewFlight(num);
-		break;
-	}
-	case ESC_KEY:
-		break;
-	}
-}
-
-void UI::SortFlights()
-{
-	const char option1Msg[] = "1.Соритровка по номеру рейса";
-	const char option2Msg[] = "2.Сортировка по месту вылета";
-	const char option3Msg[] = "3.Соритровка по месту прибытия";
-	const char option4Msg[] = "4.Сортировка по дате вылета";
-	const char option5Msg[] = "Esc.Назад";
-
-	ClFomrat::PrintCenteredNewLine("Сортировка", CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option4Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option5Msg, CL_WIDTH_LINE, fillCh);
-	bool correctInput;
-	do
-	{
-		correctInput = true;
-		char input = _getch();
-		switch (input)
-		{
-		case '1':
-			Flight::Sort(FlightSortType::Id);
-			std::cout << "Отсортировано по номеру рейса\n";
-			break;
-		case '2':
-			Flight::Sort(FlightSortType::LocDeparture);
-			std::cout << "Отсортировано по месту вылета\n";
-			break;
-		case '3':
-			Flight::Sort(FlightSortType::LocArrival);
-			std::cout << "Отсортировано по месту прибытия\n";
-			break;
-		case '4':
-			Flight::Sort(FlightSortType::DateDeparture);
-			std::cout << "Отсортировано по дате вылета\n";
-			break;
-		default:
-			correctInput = false;
-			break;
-		}
-	} while (!correctInput);
-}
-
-void UI::AdminAddFlight()
-{
-	const char acceptMsg[] = "Рейс был добавлен в список";
-	const char declineMsg[] = "Рейс не был добавлен в список";
-	Flight newFlight;
-	if (newFlight.InputInfo())
-	{
-		newFlight.PushToVector();
-		ClFomrat::PrintCenteredLine(acceptMsg, CL_WIDTH_LINE, fillCh);
-	}
-	else
-	{
-		ClFomrat::PrintCenteredLine(declineMsg, CL_WIDTH_LINE, fillCh);
-	}
-}
-
-void UI::AdminEditFlight(const int index)
-{
-	std::cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
-	const char option1Msg[] = "1.Изменить место вылета";
-	const char option2Msg[] = "2.Изменить место прибытия";
-	const char option3Msg[] = "3.Изменить дату вылета";
-	const char option4Msg[] = "4.Изменить время вылета";
-	const char option5Msg[] = "5.Изменить время прибытия";
-	const char option6Msg[] = "Esc.Назад";
-	Flight* ptr = Flight::GetFlight(index);
-	char input;
 	bool done = false;
 	while (!done)
 	{
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option2Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option3Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option4Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option5Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredNewLine(option6Msg, CL_WIDTH_LINE, fillCh);
-		input = _getch();
-		switch (input)
-		{
-		case '1':
-		{
-			std::string location;
-			InputString(location, "Место вылета: ");
-			ptr->setLocDeparture(location);
-			break;
-		}
-		case '2':
-		{
-			std::string location;
-			InputString(location, "Место прибытия: ");
-			ptr->setLocArrival(location);
-			break;
-		}
-		case '3':
-		{
-			tm tm;
-			InputDate(tm, "Дата вылета: ");
-			ptr->setDateDepatrue(tm);
-			break;
-		}
-		case '4':
-		{
-			tm tm;
-			InputTime(tm, "Время вылета: ");
-			ptr->setTimeDeparture(tm);
-			break;
-		}
-		case '5':
-		{
-			tm tm;
-			InputTime(tm, "Время прибытия: ");
-			ptr->setTimeArrival(tm);
-			break;
-		}
-		case ESC_KEY:
-		{
-			done = true;
-			break;
-		}
-		default:
-			break;
-		}
+		ClearConsole();
+		PrintMessage3l("Меню супер-пользователя");
+		std::string helloString = "Добро пожаловать, " + this_user->getLogin();
+		PrintMessage3l(helloString.c_str());
 
-		if (input != ESC_KEY)
-			ptr->PrintInfoWithTop(InfoMode::AdminMode_noCount);
-		std::cout << '\n';
-	}
-}
+		PrintCharLine();
+		PrintMessage("1.Просмотр рейсов");
+		PrintMessage("2.Мои билеты");
+		PrintMessage("3.Просмотр клиентов");
+		PrintMessage("4.Добавить администратора");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
 
-void UI::AdminAcceptUsers()
-{
-	const char option1Msg[] = "1.Подтвердить всех";
-	const char option0Msg[] = "Esc.Назад";
-	bool done = false;
-	char input;
-
-	std::cout << '\n';
-	ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-	do
-	{
-		input = _getch();
-
-	} while (input != '1' && input != ESC_KEY);
-	switch (input)
-	{
-	case '1':
-		Admin::AcceptAll();
-		done = true;
-		break;
-	case ESC_KEY:
-		done = true;
-		break;
-	}while (!done);
-
-}
-
-void UI::AdminSortUsers()
-{
-	const char option1Msg[] = "1.Соритровка по логину";
-	const char option0Msg[] = "Esc.Назад";
-	std::cout << '\n';
-	ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-	ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
-	char input;
-	do
-	{
-		input = _getch();
-	} while (input != '1' && input != ESC_KEY);
-
-	switch (input)
-	{
-	case '1':
-		User::Sort(UserSortType::Login);
-		ClFomrat::PrintCenteredLine("Отсортировано по логину", CL_WIDTH_LINE, fillCh);
-		break;
-	case ESC_KEY:
-		break;
-	}
-}
-
-void UI::AdminViewAllClients()
-{
-
-}
-
-void UI::SuperAdminMain()
-{
-	ClearConsole();
-	const char option1Msg[] = "1.Добавить админа";
-	const char option0Msg[] = "Esc.Назад";
-	bool done = false;
-	char input;
-	while (!done)
-	{
-		ClFomrat::PrintCenteredLine(option1Msg, CL_WIDTH_LINE, fillCh);
-		ClFomrat::PrintCenteredLine(option0Msg, CL_WIDTH_LINE, fillCh);
+		char input;
 		do
 		{
 			input = _getch();
-		} while (input != '1' && input != ESC_KEY);
+		} while ((input < '1' || input > '4') && input != ESC_KEY);
+
 		switch (input)
 		{
 		case '1':
-			SuperAdminAddAdmin();
+			Menu_Fligths_Admin(this_user, flightVector);
+			Flight::CopyVectorPtr(flightVector);
+			break;
+		case '2':
+			Menu_Tickets(this_user);
+			break;
+		case '3':
+			Menu_Users(this_user, userVector);
+			break;
+		case '4':
+			if (Register(AccessLevel::Admin))
+				User::CopyVectorPtr(userVector);
 			break;
 		case ESC_KEY:
 			done = true;
 			break;
-		default:
+		}
+	}
+}
+
+void UI::Main_Admin(User* this_user)
+{
+	std::vector<Flight*> flightVector;
+	Flight::CopyVectorPtr(flightVector);
+
+	std::vector<User*> userVector;
+	User::CopyVectorPtr(userVector);
+
+	bool done = false;
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Меню администратора");
+		std::string helloString = "Добро пожаловать, " + this_user->getLogin();
+		PrintMessage3l(helloString.c_str());
+
+		PrintCharLine();
+		PrintMessage("1.Просмотр рейсов");
+		PrintMessage("2.Мои билеты");
+		PrintMessage("3.Просмотр клиентов");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		char input;
+		do
+		{
+			input = _getch();
+		} while ((input < '1' || input > '3') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			Menu_Fligths_Admin(this_user, flightVector);
+			break;
+		case '2':
+			Menu_Tickets(this_user);
+			break;
+		case '3':
+			Menu_Users(this_user, userVector);
+			break;
+		case ESC_KEY:
+			done = true;
 			break;
 		}
 	}
-
-	Main();
 }
 
-void UI::SuperAdminAddAdmin()
+void UI::Main_Client(User* this_user)
 {
-	if (User::CreateNewUser(AccessLevel::AdminLvl))
-		ClFomrat::PrintCenteredLine("Админ был добавлен", CL_WIDTH_LINE, fillCh);
+	std::vector<Flight*> flightVector;
+	Flight::CopyVectorPtr(flightVector);
+
+	bool done = false;
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Меню клиента");
+		std::string helloString = "Добро пожаловать, " + this_user->getLogin();
+		PrintMessage3l(helloString.c_str());
+
+		PrintCharLine();
+		PrintMessage("1.Список рейсов");
+		PrintMessage("2.Мои билеты");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+		char input;
+		do
+		{
+			input = _getch();
+		} while (input < '1' && input > '2' && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			Menu_Fligths_Client(this_user, flightVector);
+			break;
+		case '2':
+			Menu_Tickets(this_user);
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+	}
+}
+
+void UI::Menu_Fligths_Admin(User* this_user, std::vector<Flight*>& flightVector)
+{
+	bool done = false;
+	char input = 0;
+	size_t number = 0;
+
+	while (!done)
+	{
+		ClearConsole();
+		PrintMessage3l("Список рейсов");
+
+		if (Flight::getFlightCount() < 1)
+			PrintMessage3l("Рейсов нет");
+		else Flight::PrintInfoVector(flightVector);
+
+		PrintCharLine();
+		PrintMessage("1.Выбрать");
+		PrintMessage("2.Сортировка");
+		PrintMessage("3.Поиск");
+		PrintMessage("4.Добавить");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '4') && input != ESC_KEY);
+
+		if (Flight::getFlightCount() < 1)
+		{
+			if (input != '4')
+				continue;
+		}
+
+		switch (input)
+		{
+		case '1':
+			InputVar(number, 1, flightVector.size(), "Номер: ");
+			Action_ViewFlight_Admin(this_user, flightVector[number - 1]);
+			Flight::CopyVectorPtr(flightVector);
+			break;
+		case '2':
+			Action_SortFlights(flightVector);
+			break;
+		case '3':
+		{
+			Action_SearchFligths_Admin(this_user, flightVector);
+			Flight::CopyVectorPtr(flightVector);
+			break;
+		}
+		case '4':
+			Action_AddFlight(flightVector);
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+	}
+}
+
+void UI::Menu_Fligths_Client(User* this_user, std::vector<Flight*>& flightVector)
+{
+	bool done = false;
+	char input = 0;
+	size_t number = 0;
+
+	while (!done)
+	{
+
+		ClearConsole();
+		if (Flight::getFlightCount() < 1)
+			PrintMessage3l("Рейсов нет");
+		Flight::PrintInfoVector(flightVector);
+
+		PrintCharLine();
+		PrintMessage("1.Выбрать");
+		PrintMessage("2.Сортировка");
+		PrintMessage("3.Поиск");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '5') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			InputVar(number, 1, flightVector.size(), "Номер: ");
+			Action_ViewFlight_Client(this_user, flightVector[number - 1]);
+			break;
+		case '2':
+			Action_SortFlights(flightVector);
+			break;
+		case '3':
+		{
+			Action_SearchFlights_Client(this_user, flightVector);
+			Flight::CopyVectorPtr(flightVector);
+			break;
+		}
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+	}
+}
+
+void UI::Menu_CustomFligths_Admin(User* this_user, std::vector<Flight*>& flightVector)
+{
+
+	bool done = false;
+	char input = 0;
+	size_t number = 0;
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Найденные рейсы по вашему запросу");
+
+		if (Flight::getFlightCount() < 1)
+		{
+			PrintMessage3l("По вашему запросу ничего не найдено");
+			PressEnterAction();
+			return;
+		}
+		Flight::PrintInfoVector(flightVector);
+
+		PrintCharLine();
+		PrintMessage("1.Выбрать");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+		std::cout << '\n';
+
+		do input = _getch();
+		while (input != '1' && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			InputVar(number, 1, flightVector.size(), "Номер: ");
+			Action_ViewFlight_Admin(this_user, flightVector[number - 1]);
+			done = true;
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+		ClearConsole();
+	}
+}
+
+void UI::Menu_CustomFligths_Client(User* this_user, std::vector<Flight*>& flightVector)
+{
+	bool done = false;
+	char input = 0;
+	size_t number = 0;
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Найденные рейсы по вашему запросу");
+
+		if (Flight::getFlightCount() < 1)
+		{
+			PrintMessage3l("По вашему запросу ничего не найдено");
+			PressEnterAction();
+			return;
+		}
+
+		if (Flight::getFlightCount() < 1)
+			PrintMessage("По вашему запросу ничего не найдено");
+		Flight::PrintInfoVector(flightVector);
+
+		PrintCharLine();
+		PrintMessage("1.Выбрать");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+		std::cout << '\n';
+
+		do input = _getch();
+		while (input != '1' && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			InputVar(number, 1, flightVector.size(), "Номер: ");
+			Action_ViewFlight_Client(this_user, flightVector[number - 1]);
+			done = true;
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+		ClearConsole();
+	}
+}
+
+void UI::Menu_Tickets(User* this_user)
+{
+	ClearConsole();
+	PrintMessage3l("Мои билеты");
+	if (this_user->getTicketCount() < 1)
+	{
+		PrintMessage3l("У вас нет билетов");
+	}
 	else
-		ClFomrat::PrintCenteredLine("Пользователь с таким логином уже сущетсвует", CL_WIDTH_LINE, fillCh);
+	{
+		ClFomrat::PrintCenteredLine("Ваши билеты", CL_WIDTH_LINE);
+		this_user->ShowTickets();
+	}
+	PressEnterAction();
+}
+
+void UI::Menu_Users(User* this_user, std::vector<User*>& userVector)
+{
+	ClearConsole();
+
+	bool done = false;
+	char input;
+	size_t number = 0;
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Список пользователей");
+
+		User::PrintInfoVector(userVector);
+
+		PrintCharLine();
+		PrintMessage("1.Выбрать");
+		PrintMessage("2.Добавить");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '2') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			if (userVector.empty()) break;
+			InputVar(number, 1, userVector.size(), "Номер: ");
+			Action_ViewUser(this_user, userVector, number - 1);
+			break;
+		case '2':
+			if (Register(AccessLevel::Client))
+				User::CopyVectorPtr(userVector);
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+		User::CopyVectorPtr(userVector);
+	}
+}
+
+void UI::Action_BookTicket(User* this_user, Flight* flight)
+{
+	bool done = false;
+	char input;
+	int amount = 0;
+	int chosenType = 0;
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Бронирование билета");
+
+		flight->PrintInfoWithTop();
+
+		if (flight->getTicketCount(Business) + flight->getTicketCount(Economy) < 1)
+		{
+			PrintMessage3l("На данный рейс нет билетов");
+			PressEnterAction();
+			ClearConsole();
+			return;
+		}
+
+		PrintCharLine();
+		PrintMessage("1.Эконом класс");
+		PrintMessage("2.Бизнес-класс");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '2') && input != ESC_KEY);
+
+		if (input == ESC_KEY)
+		{
+			ClearConsole();
+			return;
+		}
+
+		chosenType = input - '0';
+
+		if (flight->TicketAvailable(chosenType, 1))
+		{
+			InputVar(amount, 1, flight->getTicketCount(chosenType), "Количество билетов: ");
+			if (AcceptAction())
+			{
+				this_user->BookTicket(flight, chosenType, amount);
+				PrintMessage3l("Вы успешно забронировали билеты");
+			}
+			else PrintMessage3l("Вы отменили бронирование билетов");
+		}
+		else
+		{
+			PrintMessage3l("Билетов данного типа нет");
+			PrintMessage3l("Вы можете выбрать другой класс");
+		}
+		PressEnterAction();
+	}
+}
+
+void UI::Action_AcceptAll_Admin(std::vector<User*>& clientVector)
+{
+	PrintMessage3l("Подтвердить всех пользователей?");
+	if (AcceptAction())
+	{
+		User::AcceptAll();
+		PrintMessage3l("Все пользователи были подтверждены");
+	}
+	else PrintMessage3l("Вы отказались от подтверждения");
+	PressEnterAction();
+
+}
+
+bool UI::Action_RemoveUser(User* user, const int index)
+{
+	std::string login = user->getLogin();
+
+	PrintMessage3l("Удаление пользователя");
+
+	if (AcceptAction())
+	{
+		user->RemoveUser(index);
+		PrintMessage("Пользователь успешно удален");
+		return true;
+	}
+	else PrintMessage("Пользователь не был удален");
+	return false;
+}
+
+bool UI::Action_RemoveFlight(Flight* flightPtr)
+{
+	bool done = false;
+	char input;
+	bool isRemoved = false;
+
+	ClearConsole();
+
+	PrintMessage3l("Удаление рейса");
+
+	if (flightPtr->getPassangerCount() < 1)
+	{
+		PrintMessage3l("Подтвердите удаление");
+
+		if (AcceptAction())
+		{
+			int index = Flight::GetFlightIndex(flightPtr);
+			Flight::RemoveFlight(index);
+			PrintMessage3l("Рейс был удален");
+			isRemoved = true;
+		}
+		else PrintMessage3l("Рейс не был удален");
+	}
+	else
+		PrintMessage3l("Невозможно удалить рейсы, на которые были куплены билеты");
+
+	PressEnterAction();
+	return isRemoved;
+}
+
+bool UI::Action_EditFlight(Flight* flight)
+{
+	bool done = false;
+	char input;
+	bool isEdited = true;
+
+	Flight flightCopy = *flight;
+
+	std::string str;
+	int var;
+	tm tm;
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Редактирование информации");
+
+		flight->PrintInfoWithTop();
+
+		PrintCharLine();
+		PrintMessage("1.Изменить место вылета");
+		PrintMessage("2.Изменить место прибытия");
+		PrintMessage("3.Изменить дату вылета");
+		PrintMessage("4.Изменить время вылета");
+		PrintMessage("5.Изменить время прибытия");
+		PrintMessage("6.Изменить количество билетов");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+		std::cout << '\n';
+
+		do input = _getch();
+		while ((input < '1' || input > '6') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			InputString(str, "Место вылета: ");
+			if (AcceptAction()) flight->setLocDeparture(str);
+			else PrintMessage3l("Изменений внесено не было");
+			break;
+		case '2':
+			InputString(str, "Место прибытия: ");
+			if (AcceptAction()) flight->setLocArrival(str);
+			else PrintMessage3l("Изменений внесено не было");
+			break;
+		case '3':
+			InputDate(tm, "Дата вылета: ");
+			if (AcceptAction()) flight->setDateDepatrue(tm);
+			else PrintMessage3l("Изменений внесено не было");
+			break;
+		case '4':
+			InputTime(tm, "Время вылета: ");
+			if (AcceptAction()) flight->setTimeDeparture(tm);
+			else PrintMessage3l("Изменений внесено не было");
+			break;
+		case '5':
+			InputTime(tm, "Время прибытия: ");
+			if (AcceptAction()) flight->setTimeArrival(tm);
+			else PrintMessage3l("Изменений внесено не было");
+			break;
+		case '6':
+			PrintMessage3l("Данная функция не рабоатет");
+			PrintMessage3l("Изменений внесено не было");
+			break;
+		case ESC_KEY:
+			ClearConsole();
+			PrintMessage3l("Прошлая информация");
+			flightCopy.PrintInfoWithTop();
+			PrintMessage3l("Новая информациия");
+			flight->PrintInfoWithTop();
+			if (AcceptAction())
+				PrintMessage3l("Информция была изменена");
+			else
+			{
+				*flight = flightCopy;
+				PrintMessage3l("Все изменения были отменены");
+				isEdited = false;
+			}
+			done = true;
+			break;
+		}
+
+		ClearConsole();
+	}
+	return isEdited;
+}
+
+bool UI::Action_AddUser(std::vector<User*>& userVector)
+{
+	if (User::CreateNewUser(AccessLevel::Client))
+	{
+		PrintMessage3l("Новый пользователь был успешно добавлен");
+		return true;
+	}
+	else PrintMessage3l("Пользователь с таким логином уже существует");
+}
+
+void UI::Action_SortFlights(std::vector<Flight*>& vectorFlight)
+{
+	ClearConsole();
+
+	PrintMessage3l("Сортировка списка рейсов");
+
+	PrintCharLine();
+	PrintMessage("1.Сортировка по номеру рейса");
+	PrintMessage("2.Сортировка по месту вылета");
+	PrintMessage("3.Сортировку по дате вылета");
+	PrintMessage("4.Сортировка по месту прибытия");
+	PrintMessage(escBackMsg);
+	PrintCharLine();
+
+	char input;
+	do input = _getch();
+	while ((input < '1' || input > '4') && input != ESC_KEY);
+
+	switch (input)
+	{
+	case '1':
+		Flight::SortById(vectorFlight);
+		break;
+	case '2':
+		Flight::SortByDep(vectorFlight);
+		break;
+	case '3':
+		Flight::SortByDate(vectorFlight);
+		break;
+	case '4':
+		Flight::SortByArr(vectorFlight);
+		break;
+	case ESC_KEY:
+		break;
+	}
+}
+
+void UI::Action_SearchFligths_Admin(User* this_user, std::vector<Flight*>& flightVector)
+{
+	char input;
+	std::string data;
+	std::vector<Flight*> flightVector2;
+
+	ClearConsole();
+
+	PrintMessage3l("Поиск рейсов");
+
+	PrintCharLine();
+	PrintMessage("1.Поиск по месту вылета");
+	PrintMessage("2.Поиск по месту прибытия");
+	PrintMessage("3.Поиск по номеру рейса");
+	PrintMessage(escBackMsg);
+	PrintCharLine();
+	std::cout << '\n';
+
+	do input = _getch();
+	while ((input < '1' || input > '3') && input != ESC_KEY);
+
+	switch (input)
+	{
+	case '1':
+		InputString(data, "Место вылета: ");
+		Flight::SearchByDep(flightVector, flightVector2, data);
+		break;
+	case '2':
+		InputString(data, "Место прибытия: ");
+		Flight::SearchByArr(flightVector, flightVector2, data);
+
+		break;
+	case '3':
+		InputString(data, "Номер рейса: ");
+		Flight::SearchById(flightVector, flightVector2, data);
+		break;
+	}
+
+	if (input != ESC_KEY)
+		Menu_CustomFligths_Admin(this_user, flightVector2);
+
+	ClearConsole();
+}
+
+void UI::Action_SearchFlights_Client(User* this_user, std::vector<Flight*>& flightVector)
+{
+	char input;
+	std::string data;
+	std::vector<Flight*> flightVector2;
+
+	ClearConsole();
+
+	PrintMessage3l("Поиск рейсов");
+
+	PrintCharLine();
+	PrintMessage("1.Поиск по месту вылета");
+	PrintMessage("2.Поиск по месту прибытия");
+	PrintMessage("3.Поиск по номеру рейса");
+	PrintMessage(escBackMsg);
+	PrintCharLine();
+	std::cout << '\n';
+
+	do input = _getch();
+	while ((input < '1' || input > '3') && input != ESC_KEY);
+
+	switch (input)
+	{
+	case '1':
+		InputString(data, "Место вылета: ");
+		Flight::SearchByDep(flightVector, flightVector2, data);
+		break;
+	case '2':
+		InputString(data, "Место прибытия: ");
+		Flight::SearchByArr(flightVector, flightVector2, data);
+		break;
+	case '3':
+		InputString(data, "Номер рейса: ");
+		Flight::SearchById(flightVector, flightVector2, data);
+		break;
+	}
+	if (input != ESC_KEY)
+		Menu_CustomFligths_Client(this_user, flightVector2);
+
+	ClearConsole();
+}
+
+void UI::Action_AddFlight(std::vector<Flight*>& flightVector)
+{
+	ClearConsole();
+
+	PrintMessage3l("Добававление нового рейса");
+
+	Flight newFlight;
+	newFlight.InputInfo();
+	newFlight.PrintInfoWithTop();
+	PrintMessage3l("Номер рейса будет сгенерирован при добавлении в массив");
+	if (AcceptAction())
+	{
+		newFlight.PushToVector();
+		PrintMessage("Новый рейс был добавлен");
+		Flight::CopyVectorPtr(flightVector);
+	}
+	else PrintMessage("Новый рейс не было добавлен");
+
+	PressEnterAction();
+}
+
+void UI::Action_ViewFlight_Admin(User* this_user, Flight* flight)
+{
+	bool done = false;
+	char input;
+
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Просмотр рейса");
+
+		flight->PrintInfoWithTop();
+		PrintCharLine();
+		std::cout << '\n';
+
+		PrintMessage("Пассажиры", ' ');
+		if (flight->getPassangerCount() < 1)
+			PrintMessage3l("Пассажиров нет");
+		else
+		{
+			flight->PrintPassangers();
+			PrintCharLine();
+		}
+
+		PrintCharLine();
+		PrintMessage("1.Забронировать");
+		PrintMessage("2.Редактировать");
+		PrintMessage("3.Удалить");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '3') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			Action_BookTicket(this_user, flight);
+			break;
+		case '2':
+			Action_EditFlight(flight);
+			break;
+		case '3':
+			if (Action_RemoveFlight(flight))
+				done = true;
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+	}
+}
+
+void UI::Action_ViewFlight_Client(User* this_user, Flight* flight)
+{
+
+	bool done = false;
+	char input;
+
+	while (!done)
+	{
+		ClearConsole();
+
+		PrintMessage3l("Просмотр рейса");
+
+		flight->PrintInfoWithTop();
+
+		PrintCharLine();
+		PrintMessage("1.Забронировать");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > '2') && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			Action_BookTicket(this_user, flight);
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+	}
+}
+
+
+void UI::Action_ViewUser(User* this_user, std::vector<User*>& userVector, const size_t index)
+{
+	ClearConsole();
+
+	bool done = false;
+	char input;
+	std::string str;
+	if (userVector[index]->getAccessLevel() >= this_user->getAccessLevel())
+	{
+		PrintMessage3l("Вы не можете просматировать данную учетную запись");
+		PressEnterAction();
+		ClearConsole();
+		return;
+	}
+	while (!done)
+	{
+		PrintMessage3l("Просмотр пользователя");
+
+		char maxInput = userVector[index]->getAccessLevel() == AccessLevel::NoAccess ? '5' : '4';
+
+		userVector[index]->PrintInfoWithTop();
+
+		PrintCharLine();
+		PrintMessage("1.Просмотреть билеты");
+		PrintMessage("2.Поменять логин");
+		PrintMessage("3.Поменять пароль");
+		PrintMessage("4.Удалить");
+		if (maxInput == '5') PrintMessage("5.Подтвердить аккаунт");
+		PrintMessage(escBackMsg);
+		PrintCharLine();
+
+		do input = _getch();
+		while ((input < '1' || input > maxInput) && input != ESC_KEY);
+
+		switch (input)
+		{
+		case '1':
+			Action_ViewClientTickets(userVector[index]);
+			break;
+		case '2':
+			Action_ChangeLogin(userVector[index]);
+			break;
+		case '3':
+			Action_ChangePassword(userVector[index]);
+			break;
+		case '4':
+		{
+			if (userVector[index]->getLogin() == this_user->getLogin())
+				PrintMessage3l("Нельзя удалить себя");
+			else if (Action_RemoveUser(userVector[index], index))
+			{
+				User::CopyVectorPtr(userVector);
+				done = true;
+			}
+			break;
+		}
+		case '5':
+			PrintMessage3l("Вы уверены, что хотите подтвердить пользоватлея?");
+			if (AcceptAction())
+				userVector[index]->setAccessLevel(AccessLevel::Client);
+			break;
+		case ESC_KEY:
+			done = true;
+			break;
+		}
+
+		ClearConsole();
+	}
+}
+
+void UI::Action_ChangePassword(User* user)
+{
+	ClearConsole();
+
+	PrintMessage3l("Изменение пароля");
+
+	std::string newPassword;
+	InputPassword(newPassword, 8, 32);
+	if (AcceptAction)
+	{
+		user->ChangePassword(newPassword);
+		PrintMessage3l("Проль успешно изменен");
+	}
+	else PrintMessage3l("Пароль не был изменен");
+}
+
+void UI::Action_ChangeLogin(User* user)
+{
+	ClearConsole();
+
+	PrintMessage3l("Изменение логина");
+
+	std::string newLogin;
+	InputLogin(newLogin, 3, 32);
+	if (AcceptAction)
+	{
+		user->setLogin(newLogin);
+		PrintMessage3l("Логин успешно изменен");
+	}
+	else PrintMessage3l("Логин не был изменен");
+}
+
+void UI::Action_ViewClientTickets(User* user)
+{
+	ClearConsole();
+
+	PrintMessage3l("Просмотр билетов пользователя");
+
+	if (user->getTicketCount() < 1)
+	{
+		PrintMessage3l("У пользователя нет билетов");
+	}
+	else
+	{
+		ClFomrat::PrintCenteredLine("Билеты пользователя", CL_WIDTH_LINE);
+		user->ShowTickets();
+	}
+	PressEnterAction();
+}
+
+bool UI::AcceptAction()
+{
+	PrintMessage("Нажмите ENTER, чтобы подтвердить, или ESC чтобы отменить");
+	char input;
+	do input = _getch();
+	while (input != ENTER_KEY && input != ESC_KEY);
+	return input == ENTER_KEY ? true : false;
+}
+
+void UI::PressEnterAction()
+{
+	ClFomrat::PrintCenteredLine("Нажмите ENTER, чтобы продолжить", CL_WIDTH_LINE, fillCh);
+	char input;
+	do input = _getch();
+	while (input != ENTER_KEY);
+}
+
+
+void UI::PrintMessage(const char* msg, const char fill)
+{
+	ClFomrat::PrintCenteredLine(msg, CL_WIDTH_LINE, fill);
+}
+
+void UI::PrintMessageNL(const char* msg)
+{
+	std::cout << '\n';
+	ClFomrat::PrintCenteredLine(msg, CL_WIDTH_LINE, fillCh);
+	std::cout << '\n';
+}
+
+void UI::PrintMessage3l(const char* str, const char ch)
+{
+	PrintCharLine(ch);
+	PrintMessage(str);
+	PrintCharLine(ch);
+
+}
+
+void UI::PrintCharLine(char ch)
+{
+	std::cout << std::setfill('-') << std::setw(CL_WIDTH_LINE) << '\n';
 }

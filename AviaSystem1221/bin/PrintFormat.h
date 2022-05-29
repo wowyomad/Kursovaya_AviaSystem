@@ -8,7 +8,7 @@ namespace ClFomrat
 {
 	void PrintCenteredLine(std::string str, const unsigned width, const char fill = ' ');
 	void PrintCenteredNewLine(std::string str, const unsigned width, const char fill = ' ');
-	void PrintCenteredRow(const std::vector<std::string>& vectorString,
+	void PrintRow(const std::vector<std::string>& vectorString,
 		const int width,
 		const int horizontal = 1,
 		const int vertical = 1,

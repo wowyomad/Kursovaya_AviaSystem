@@ -22,7 +22,7 @@
     <ClCompile Include="bin\FlightClass.cpp" />
     <ClCompile Include="bin\Hash.cpp" />
     <ClCompile Include="bin\main.cpp" />
-    <ClCompile Include="bin\Table.cpp" />
+    <ClCompile Include="bin\PrintFormat.cpp" />
     <ClCompile Include="bin\UserClass.cpp" />
     <ClCompile Include="bin\UserConsoleInput.cpp" />
     <ClCompile Include="bin\UserInterface.cpp" />
@@ -32,7 +32,7 @@
     <ClInclude Include="bin\FileClass.hpp" />
     <ClInclude Include="bin\FlightClass.h" />
     <ClInclude Include="bin\Hash.h" />
-    <ClInclude Include="bin\Table.h" />
+    <ClInclude Include="bin\PrintFormat.h" />
     <ClInclude Include="bin\UserClass.h" />
     <ClInclude Include="bin\UserConsoleInput.h" />
     <ClInclude Include="bin\UserInterface.h" />

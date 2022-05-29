@@ -3,36 +3,62 @@
 #include "common.h"
 namespace UI
 {
-	void Start();
-	void Main();
-	void Register(const int accessLevel = AccessLevel::NoAcessLvl);
+	void StartSystem();
+
+	void Menu_Main();
+	bool Register(const AccessLevel = AccessLevel::NoAccess);
 	void Login();
 
+	void Main_SuperAdmin(User* this_user);
+	void Main_Admin(User* this_user);
+	void Main_Client(User* this_user);
 
-	void AdminMain();
-	void ViewAllFlights(const int mode, Client* client = nullptr);
-	void ViewSpecificFlights(std::vector<Flight> vec, const int mode);
-	void AdminViewAllUsers();
-	void AdminViewSpecificUsers(std::vector<Flight> vec, const int mode);
-	void AdminViewUser(const int index);
-	void AdminViewFlight(const int index);
-	void SearchFligths(const int mode);
-	void AdminSearchUsers();
-	void AdminAddFlight();
-	void AdminEditFlight(const int index);
-	void AdminAcceptUsers();
-	void AdminSortUsers();
-	void AdminViewAllClients();
+	void Menu_Fligths_Admin(User* this_user, std::vector<Flight*>& flightVector);
+	void Menu_Fligths_Client(User* this_user, std::vector<Flight*>& flightVector);
 
-	void SuperAdminMain();
-	void SuperAdminAddAdmin();
+	void Menu_CustomFligths_Admin(User* this_user, std::vector<Flight*>& flightVector);
+	void Menu_CustomFligths_Client(User* this_user, std::vector<Flight*>& flightVector);
 
-	void SortFlights();
+	void Menu_Tickets(User* this_user);
 
+	void Menu_Users(User* this_user, std::vector <User*>& userVector);
 
-	void ClientMain(Client& client);
-	void ClientViewFlight(Client& client, const int index);
-	void ClientBookTicket(Client& client, Flight* flight);
+	void Action_BookTicket(User* this_user, Flight* flight);
 
+	void Action_AcceptAll_Admin(std::vector <User*>& clientVector);
 
+	bool Action_RemoveUser(User* user, const int index);
+
+	bool Action_RemoveFlight(Flight* flightPtr);
+
+	bool Action_EditFlight(Flight* flight);
+
+	bool Action_AddUser(std::vector<User*>& userVector);
+
+	void Action_SortFlights(std::vector<Flight*>& vectorFlight);
+
+	void Action_SearchFligths_Admin(User* this_user, std::vector<Flight*>& flightVector);
+
+	void Action_SearchFlights_Client(User* this_user, std::vector<Flight*>& flightVector);
+
+	void Action_AddFlight(std::vector<Flight*>& flightVector);
+
+	void Action_ViewFlight_Admin(User* this_user, Flight* flight);
+
+	void Action_ViewFlight_Client(User* this_user, Flight* flight);
+
+	void Action_ViewUser(User* this_user, std::vector<User*>& userVector, const size_t index);
+
+	void Action_ChangePassword(User* user);
+
+	void Action_ChangeLogin(User* user);
+
+	void Action_ViewClientTickets(User* user);
+
+	bool AcceptAction();
+	void PressEnterAction();
+	void PrintMessage(const char* str, const char fill = ':');
+	void PrintMessageNL(const char* str);
+	void PrintMessage3l(const char* str, const char ch = '-');
+	void PrintCharLine(char ch = '-');
 }

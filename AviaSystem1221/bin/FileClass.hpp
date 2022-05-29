@@ -18,9 +18,9 @@ public:
 	static bool ReadFileToVector(std::fstream& file, std::vector<T>& vector)
 	{
 		if (!file.is_open()) return false;
-		T temp;
 		while (!file.eof())
 		{
+			T temp;
 			file >> temp;
 			vector.emplace_back(std::move(temp));
 			file.get();
